@@ -1,0 +1,121 @@
+customer_id,customer_name,industry,naics,city,state,country,employee_count,annual_revenue
+C0001,Atlas Manufacturing 1,Specialty Trade Contractors,238,Chicago,IL,USA,101,186680000
+C0002,Legacy Industrial 2,Specialty Trade Contractors,238,Houston,IL,USA,1166,26300000
+C0003,Precision Solutions 3,Industrial Machinery,333,Cleveland,PA,USA,526,128810000
+C0004,Apex Energy 4,Specialty Trade Contractors,238,Houston,CA,USA,909,59010000
+C0005,Atlas Energy 5,Petroleum & Coal,324,Dallas,GA,USA,746,73080000
+C0006,Delta Solutions 6,Industrial Machinery,333,Pittsburgh,GA,USA,248,92950000
+C0007,Legacy Industrial 7,Industrial Machinery,333,Charlotte,NC,USA,1148,35580000
+C0008,Advanced Industrial 8,Chemicals,325,Los Angeles,AZ,USA,790,146450000
+C0009,Advanced Systems 9,Petroleum & Coal,324,Pittsburgh,MI,USA,213,214550000
+C0010,Atlas Supply 10,Transportation Equipment,336,Pittsburgh,IN,USA,383,95690000
+C0011,Atlas Manufacturing 11,Specialty Trade Contractors,238,Atlanta,IL,USA,400,135860000
+C0012,Delta Industrial 12,Transportation Equipment,336,Cleveland,MI,USA,1190,58810000
+C0013,Atlas Solutions 13,Industrial Machinery,333,Detroit,IN,USA,871,70600000
+C0014,Titan Manufacturing 14,Petroleum & Coal,324,Pittsburgh,NC,USA,860,221750000
+C0015,Apex Systems 15,Petroleum & Coal,324,Phoenix,PA,USA,1199,137050000
+C0016,Summit Solutions 16,Transportation Equipment,336,Atlanta,IN,USA,499,249340000
+C0017,Summit Supply 17,Industrial Machinery,333,Indianapolis,TX,USA,274,42450000
+C0018,Titan Solutions 18,Utilities,221,Pittsburgh,IL,USA,838,98500000
+C0019,Pioneer Energy 19,Utilities,221,Los Angeles,TX,USA,284,172020000
+C0020,Titan Industrial 20,Chemicals,325,Pittsburgh,IL,USA,651,111520000
+C0021,Northern Supply 21,Utilities,221,Charlotte,OH,USA,1089,228590000
+C0022,Summit Solutions 22,Utilities,221,Charlotte,PA,USA,363,96610000
+C0023,Advanced Energy 23,Industrial Machinery,333,Pittsburgh,AZ,USA,713,124710000
+C0024,Advanced Industrial 24,Petroleum & Coal,324,Atlanta,TX,USA,543,220110000
+C0025,Titan Solutions 25,Industrial Machinery,333,Chicago,CA,USA,307,36460000
+C0026,Pioneer Supply 26,Chemicals,325,Cleveland,CA,USA,916,241270000
+C0027,Delta Systems 27,Specialty Trade Contractors,238,Charlotte,MI,USA,867,248810000
+C0028,Delta Industrial 28,Transportation Equipment,336,Phoenix,IL,USA,557,60050000
+C0029,Precision Manufacturing 29,Utilities,221,Dallas,PA,USA,501,6760000
+C0030,Northern Supply 30,Industrial Machinery,333,Atlanta,IN,USA,195,130970000
+C0031,Apex Solutions 31,Petroleum & Coal,324,Atlanta,CA,USA,320,182220000
+C0032,Advanced Supply 32,Petroleum & Coal,324,Indianapolis,NC,USA,883,51650000
+C0033,Precision Supply 33,Chemicals,325,Los Angeles,GA,USA,891,119420000
+C0034,Delta Industrial 34,Specialty Trade Contractors,238,Cleveland,IL,USA,174,103640000
+C0035,Legacy Manufacturing 35,Petroleum & Coal,324,Pittsburgh,PA,USA,1148,114910000
+C0036,Pioneer Industrial 36,Transportation Equipment,336,Houston,PA,USA,204,113570000
+C0037,Atlas Manufacturing 37,Specialty Trade Contractors,238,Indianapolis,CA,USA,80,242400000
+C0038,Precision Manufacturing 38,Transportation Equipment,336,Indianapolis,NC,USA,487,216840000
+C0039,Titan Energy 39,Industrial Machinery,333,Indianapolis,GA,USA,593,232000000
+C0040,Northern Manufacturing 40,Specialty Trade Contractors,238,Houston,CA,USA,1046,42930000
+C0041,Precision Industrial 41,Utilities,221,Phoenix,CA,USA,174,188250000
+C0042,Pioneer Industrial 42,Transportation Equipment,336,Chicago,CA,USA,1137,43570000
+C0043,Atlas Systems 43,Industrial Machinery,333,Dallas,AZ,USA,189,170430000
+C0044,Legacy Supply 44,Utilities,221,Phoenix,PA,USA,131,156750000
+C0045,Atlas Supply 45,Utilities,221,Detroit,CA,USA,697,234000000
+C0046,Northern Systems 46,Petroleum & Coal,324,Detroit,MI,USA,860,37070000
+C0047,Apex Industrial 47,Industrial Machinery,333,Dallas,TX,USA,988,157180000
+C0048,Delta Industrial 48,Utilities,221,Cleveland,PA,USA,1086,69970000
+C0049,Pioneer Supply 49,Chemicals,325,Pittsburgh,MI,USA,373,112360000
+C0050,Pioneer Energy 50,Utilities,221,Los Angeles,CA,USA,66,168630000
+C0051,Advanced Supply 51,Industrial Machinery,333,Charlotte,OH,USA,591,33280000
+C0052,Delta Manufacturing 52,Petroleum & Coal,324,Los Angeles,MI,USA,627,153180000
+C0053,Precision Industrial 53,Specialty Trade Contractors,238,Los Angeles,MI,USA,1085,124690000
+C0054,Summit Supply 54,Transportation Equipment,336,Pittsburgh,MI,USA,140,5870000
+C0055,Pioneer Industrial 55,Petroleum & Coal,324,Dallas,NC,USA,1179,177890000
+C0056,Delta Solutions 56,Industrial Machinery,333,Charlotte,OH,USA,1167,13830000
+C0057,Delta Industrial 57,Petroleum & Coal,324,Detroit,GA,USA,311,15250000
+C0058,Pioneer Systems 58,Petroleum & Coal,324,Phoenix,PA,USA,260,91650000
+C0059,Summit Systems 59,Specialty Trade Contractors,238,Houston,OH,USA,534,216830000
+C0060,Atlas Energy 60,Petroleum & Coal,324,Chicago,IN,USA,893,201550000
+C0061,Titan Manufacturing 61,Specialty Trade Contractors,238,Cleveland,IL,USA,833,218680000
+C0062,Atlas Manufacturing 62,Transportation Equipment,336,Houston,IN,USA,675,206030000
+C0063,Advanced Energy 63,Specialty Trade Contractors,238,Detroit,PA,USA,866,85420000
+C0064,Pioneer Energy 64,Specialty Trade Contractors,238,Houston,CA,USA,868,171480000
+C0065,Northern Industrial 65,Industrial Machinery,333,Dallas,MI,USA,415,147240000
+C0066,Delta Systems 66,Utilities,221,Phoenix,GA,USA,757,183490000
+C0067,Atlas Energy 67,Utilities,221,Houston,IL,USA,838,225380000
+C0068,Pioneer Supply 68,Specialty Trade Contractors,238,Los Angeles,GA,USA,53,132380000
+C0069,Delta Solutions 69,Petroleum & Coal,324,Detroit,IN,USA,933,22140000
+C0070,Legacy Energy 70,Specialty Trade Contractors,238,Indianapolis,IL,USA,665,129250000
+C0071,Legacy Supply 71,Specialty Trade Contractors,238,Indianapolis,MI,USA,1185,36190000
+C0072,Precision Energy 72,Specialty Trade Contractors,238,Pittsburgh,OH,USA,666,104490000
+C0073,Titan Supply 73,Petroleum & Coal,324,Cleveland,GA,USA,709,118920000
+C0074,Northern Solutions 74,Utilities,221,Los Angeles,NC,USA,397,166420000
+C0075,Atlas Supply 75,Specialty Trade Contractors,238,Pittsburgh,AZ,USA,736,27880000
+C0076,Atlas Systems 76,Petroleum & Coal,324,Phoenix,PA,USA,351,10980000
+C0077,Apex Manufacturing 77,Industrial Machinery,333,Indianapolis,NC,USA,898,222100000
+C0078,Precision Industrial 78,Transportation Equipment,336,Indianapolis,GA,USA,549,41150000
+C0079,Pioneer Manufacturing 79,Petroleum & Coal,324,Dallas,OH,USA,1110,118810000
+C0080,Pioneer Solutions 80,Transportation Equipment,336,Detroit,OH,USA,1001,168560000
+C0081,Pioneer Systems 81,Transportation Equipment,336,Chicago,AZ,USA,1083,109550000
+C0082,Atlas Supply 82,Specialty Trade Contractors,238,Pittsburgh,NC,USA,971,68500000
+C0083,Advanced Supply 83,Utilities,221,Pittsburgh,NC,USA,539,72280000
+C0084,Pioneer Industrial 84,Petroleum & Coal,324,Chicago,MI,USA,737,83330000
+C0085,Atlas Industrial 85,Petroleum & Coal,324,Indianapolis,PA,USA,834,175020000
+C0086,Precision Manufacturing 86,Transportation Equipment,336,Indianapolis,IN,USA,1161,119150000
+C0087,Apex Systems 87,Transportation Equipment,336,Atlanta,AZ,USA,90,214900000
+C0088,Legacy Solutions 88,Industrial Machinery,333,Charlotte,IN,USA,661,189600000
+C0089,Legacy Systems 89,Utilities,221,Houston,PA,USA,1049,58760000
+C0090,Titan Manufacturing 90,Transportation Equipment,336,Phoenix,IN,USA,878,182420000
+C0091,Precision Industrial 91,Utilities,221,Los Angeles,TX,USA,856,150010000
+C0092,Northern Systems 92,Transportation Equipment,336,Detroit,OH,USA,995,49520000
+C0093,Legacy Energy 93,Petroleum & Coal,324,Indianapolis,NC,USA,719,87690000
+C0094,Pioneer Industrial 94,Chemicals,325,Detroit,IL,USA,1013,9750000
+C0095,Atlas Manufacturing 95,Petroleum & Coal,324,Houston,IL,USA,132,189790000
+C0096,Advanced Solutions 96,Utilities,221,Cleveland,OH,USA,538,35920000
+C0097,Apex Supply 97,Transportation Equipment,336,Dallas,MI,USA,805,46110000
+C0098,Northern Solutions 98,Petroleum & Coal,324,Los Angeles,MI,USA,271,146780000
+C0099,Atlas Industrial 99,Transportation Equipment,336,Pittsburgh,GA,USA,456,23620000
+C0100,Apex Industrial 100,Specialty Trade Contractors,238,Detroit,AZ,USA,297,200080000
+C0101,Delta Industrial 101,Utilities,221,Indianapolis,GA,USA,808,21890000
+C0102,Titan Supply 102,Transportation Equipment,336,Chicago,IL,USA,937,240390000
+C0103,Northern Solutions 103,Transportation Equipment,336,Charlotte,OH,USA,1118,241540000
+C0104,Apex Energy 104,Transportation Equipment,336,Detroit,NC,USA,942,207300000
+C0105,Atlas Systems 105,Petroleum & Coal,324,Phoenix,IL,USA,621,221000000
+C0106,Delta Manufacturing 106,Utilities,221,Atlanta,GA,USA,738,12030000
+C0107,Apex Supply 107,Petroleum & Coal,324,Pittsburgh,IN,USA,579,88380000
+C0108,Advanced Manufacturing 108,Utilities,221,Indianapolis,TX,USA,1108,237280000
+C0109,Titan Systems 109,Transportation Equipment,336,Houston,CA,USA,542,174200000
+C0110,Atlas Energy 110,Industrial Machinery,333,Los Angeles,MI,USA,503,104080000
+C0111,Delta Systems 111,Utilities,221,Charlotte,IN,USA,1019,140600000
+C0112,Northern Manufacturing 112,Chemicals,325,Dallas,IN,USA,979,71370000
+C0113,Pioneer Supply 113,Specialty Trade Contractors,238,Chicago,PA,USA,696,34290000
+C0114,Apex Solutions 114,Petroleum & Coal,324,Phoenix,PA,USA,1041,72740000
+C0115,Delta Manufacturing 115,Chemicals,325,Pittsburgh,IL,USA,447,77580000
+C0116,Precision Solutions 116,Industrial Machinery,333,Pittsburgh,CA,USA,309,72210000
+C0117,Precision Solutions 117,Specialty Trade Contractors,238,Pittsburgh,OH,USA,1055,30130000
+C0118,Precision Energy 118,Transportation Equipment,336,Atlanta,NC,USA,952,88470000
+C0119,Apex Supply 119,Industrial Machinery,333,Los Angeles,IL,USA,870,125480000
+C0120,Northern Industrial 120,Industrial Machinery,333,Cleveland,OH,USA,355,203730000
