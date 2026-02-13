@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Page 1: Executive Summary - Power BI Design</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        .dashboard {
+            max-width: 1920px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.05);
+            padding: 30px;
+            border-radius: 20px;
+        }
+        .header {
+            color: white;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 48px;
+            font-weight: 700;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+            margin-bottom: 10px;
+        }
+        .header p {
+            font-size: 20px;
+            opacity: 0.9;
+        }
+        
+        /* Hero Card */
+        .hero-card {
+            background: linear-gradient(135deg, #E74C3C 0%, #C0392B 100%);
+            border-radius: 30px;
+            padding: 60px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            text-align: center;
+            color: white;
+        }
+        .hero-label {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: 3px;
+            opacity: 0.95;
+            margin-bottom: 20px;
+        }
+        .hero-value {
+            font-size: 140px;
+            font-weight: 900;
+            line-height: 1;
+            text-shadow: 4px 4px 12px rgba(0,0,0,0.4);
+            margin-bottom: 20px;
+        }
+        .hero-subtext {
+            font-size: 28px;
+            opacity: 0.95;
+            margin-bottom: 40px;
+        }
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            margin-top: 40px;
+        }
+        .hero-stat {
+            text-align: center;
+        }
+        .hero-stat-value {
+            font-size: 56px;
+            font-weight: 700;
+        }
+        .hero-stat-label {
+            font-size: 18px;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+        
+        /* KPI Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        .kpi-card {
+            background: white;
+            border-radius: 20px;
+            padding: 35px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+        }
+        .kpi-card.blue::before { background: linear-gradient(90deg, #3498DB, #2980B9); }
+        .kpi-card.green::before { background: linear-gradient(90deg, #27AE60, #229954); }
+        .kpi-card.red::before { background: linear-gradient(90deg, #E74C3C, #C0392B); }
+        .kpi-card.orange::before { background: linear-gradient(90deg, #F39C12, #E67E22); }
+        
+        .kpi-label {
+            font-size: 15px;
+            color: #7f8c8d;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+        .kpi-value {
+            font-size: 42px;
+            font-weight: 800;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        .kpi-trend {
+            font-size: 16px;
+            font-weight: 600;
+            color: #27AE60;
+        }
+        .kpi-trend.down { color: #E74C3C; }
+        
+        /* Chart Section */
+        .chart-section {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+        }
+        .chart-card {
+            background: white;
+            border-radius: 20px;
+            padding: 35px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .chart-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 25px;
+        }
+        .chart-placeholder {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            height: 300px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #7f8c8d;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            font-size: 16px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Header -->
+        <div class="header">
+            <h1>📊 EXECUTIVE SUMMARY</h1>
+            <p>Real-Time Customer Intelligence Dashboard</p>
+        </div>
+        
+        <!-- Hero Card -->
+        <div class="hero-card">
+            <div class="hero-label">TOP 20% OF CUSTOMERS GENERATE</div>
+            <div class="hero-value">87.3%</div>
+            <div class="hero-subtext">of Total Gross Margin</div>
+            
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <div class="hero-stat-value">24</div>
+                    <div class="hero-stat-label">Elite Customers</div>
+                </div>
+                <div style="width: 3px; background: rgba(255,255,255,0.3); align-self: stretch;"></div>
+                <div class="hero-stat">
+                    <div class="hero-stat-value">120</div>
+                    <div class="hero-stat-label">Total Customers</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- KPI Grid -->
+        <div class="kpi-grid">
+            <div class="kpi-card blue">
+                <div class="kpi-label">Top 20% Avg Value</div>
+                <div class="kpi-value">$125K</div>
+                <div class="kpi-trend">↑ 324% vs Others</div>
+            </div>
+            
+            <div class="kpi-card green">
+                <div class="kpi-label">Margin Multiplier</div>
+                <div class="kpi-value">4.2x</div>
+                <div class="kpi-trend">Elite Premium</div>
+            </div>
+            
+            <div class="kpi-card red">
+                <div class="kpi-label">Total Revenue</div>
+                <div class="kpi-value">$3.2M</div>
+                <div class="kpi-trend">↑ 18% YoY</div>
+            </div>
+            
+            <div class="kpi-card orange">
+                <div class="kpi-label">Opportunity Value</div>
+                <div class="kpi-value">$890K</div>
+                <div class="kpi-trend">24 Accounts</div>
+            </div>
+        </div>
+        
+        <!-- Chart Section -->
+        <div class="chart-section">
+            <div class="chart-card">
+                <div class="chart-title">📈 Revenue Trend by Customer Tier</div>
+                <div class="chart-placeholder">Line Chart: Top 20% vs Others (Last 12 Months)</div>
+            </div>
+            
+            <div class="chart-card">
+                <div class="chart-title">🎯 Pareto Analysis</div>
+                <div class="chart-placeholder">80/20 Rule Visualization</div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <p>Strikezone Intelligence Platform • Page 1 of 4 • Updated in Real-Time</p>
+        </div>
+    </div>
+</body>
+</html>

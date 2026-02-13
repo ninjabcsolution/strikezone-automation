@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Page 2: Top 20% Analysis - Power BI Design</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            padding: 20px;
+        }
+        .dashboard {
+            max-width: 1920px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.05);
+            padding: 30px;
+            border-radius: 20px;
+        }
+        .header {
+            color: white;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 48px;
+            font-weight: 700;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+            margin-bottom: 10px;
+        }
+        .header p {
+            font-size: 20px;
+            opacity: 0.9;
+        }
+        
+        /* Top Section - 3 Cards */
+        .top-section {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        .metric-card {
+            background: white;
+            border-radius: 25px;
+            padding: 40px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 8px;
+        }
+        .metric-card.gold::before { background: linear-gradient(90deg, #FFD700, #FFA500); }
+        .metric-card.silver::before { background: linear-gradient(90deg, #C0C0C0, #808080); }
+        .metric-card.bronze::before { background: linear-gradient(90deg, #CD7F32, #8B4513); }
+        
+        .metric-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+        .metric-value {
+            font-size: 52px;
+            font-weight: 800;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .metric-label {
+            font-size: 16px;
+            color: #7f8c8d;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* Table Section */
+        .table-card {
+            background: white;
+            border-radius: 25px;
+            padding: 40px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .table-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+        .filter-button {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(17,153,142,0.3);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 10px;
+        }
+        th {
+            text-align: left;
+            font-size: 13px;
+            color: #7f8c8d;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 15px;
+            background: #f8f9fa;
+        }
+        td {
+            padding: 20px 15px;
+            font-size: 15px;
+            color: #2c3e50;
+            background: #ffffff;
+            border-top: 1px solid #ecf0f1;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        td:first-child {
+            border-left: 1px solid #ecf0f1;
+            border-radius: 10px 0 0 10px;
+        }
+        td:last-child {
+            border-right: 1px solid #ecf0f1;
+            border-radius: 0 10px 10px 0;
+        }
+        .rank-badge {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            line-height: 40px;
+            border-radius: 50%;
+            font-weight: 700;
+            text-align: center;
+            color: white;
+        }
+        .rank-1 { background: linear-gradient(135deg, #FFD700, #FFA500); }
+        .rank-2 { background: linear-gradient(135deg, #C0C0C0, #808080); }
+        .rank-3 { background: linear-gradient(135deg, #CD7F32, #8B4513); }
+        .rank-other { background: linear-gradient(135deg, #95a5a6, #7f8c8d); }
+        
+        .customer-name {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .margin-value {
+            font-weight: 700;
+            color: #27AE60;
+            font-size: 17px;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #ecf0f1;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #11998e 0%, #38ef7d 100%);
+            border-radius: 10px;
+        }
+        
+        /* Chart Grid */
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+        }
+        .chart-card {
+            background: white;
+            border-radius: 25px;
+            padding: 35px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+        }
+        .chart-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 25px;
+        }
+        .chart-placeholder {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            height: 250px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #11998e;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            font-size: 16px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Header -->
+        <div class="header">
+            <h1>🏆 TOP 20% ELITE CUSTOMERS</h1>
+            <p>Your Most Valuable Relationships</p>
+        </div>
+        
+        <!-- Top Metrics -->
+        <div class="top-section">
+            <div class="metric-card gold">
+                <div class="metric-icon">👑</div>
+                <div class="metric-value">$2.8M</div>
+                <div class="metric-label">Total Elite Revenue</div>
+            </div>
+            
+            <div class="metric-card silver">
+                <div class="metric-icon">💎</div>
+                <div class="metric-value">$1.2M</div>
+                <div class="metric-label">Elite Gross Margin</div>
+            </div>
+            
+            <div class="metric-card bronze">
+                <div class="metric-icon">⭐</div>
+                <div class="metric-value">42.8%</div>
+                <div class="metric-label">Avg Margin Rate</div>
+            </div>
+        </div>
+        
+        <!-- Elite Customers Table -->
+        <div class="table-card">
+            <div class="table-header">
+                <div class="table-title">📊 Elite Customer Rankings</div>
+                <button class="filter-button">🔍 Filter & Sort</button>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>RANK</th>
+                        <th>CUSTOMER</th>
+                        <th>INDUSTRY</th>
+                        <th>LOCATION</th>
+                        <th>REVENUE</th>
+                        <th>MARGIN</th>
+                        <th>PERFORMANCE</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="rank-badge rank-1">1</span></td>
+                        <td class="customer-name">Acme Industrial Solutions</td>
+                        <td>Manufacturing</td>
+                        <td>Houston, TX</td>
+                        <td>$485,200</td>
+                        <td class="margin-value">$208,500</td>
+                        <td><div class="progress-bar"><div class="progress-fill" style="width: 95%"></div></div></td>
+                    </tr>
+                    <tr>
+                        <td><span class="rank-badge rank-2">2</span></td>
+                        <td class="customer-name">TechCorp Engineering</td>
+                        <td>Technology</td>
+                        <td>Austin, TX</td>
+                        <td>$412,800</td>
+                        <td class="margin-value">$195,300</td>
+                        <td><div class="progress-bar"><div class="progress-fill" style="width: 88%"></div></div></td>
+                    </tr>
+                    <tr>
+                        <td><span class="rank-badge rank-3">3</span></td>
+                        <td class="customer-name">Global Logistics Inc</td>
+                        <td>Logistics</td>
+                        <td>Dallas, TX</td>
+                        <td>$398,500</td>
+                        <td class="margin-value">$182,400</td>
+                        <td><div class="progress-bar"><div class="progress-fill" style="width: 82%"></div></div></td>
+                    </tr>
+                    <tr>
+                        <td><span class="rank-badge rank-other">4</span></td>
+                        <td class="customer-name">Precision Manufacturing</td>
+                        <td>Manufacturing</td>
+                        <td>San Antonio, TX</td>
+                        <td>$365,200</td>
+                        <td class="margin-value">$168,900</td>
+                        <td><div class="progress-bar"><div class="progress-fill" style="width: 76%"></div></div></td>
+                    </tr>
+                    <tr>
+                        <td><span class="rank-badge rank-other">5</span></td>
+                        <td class="customer-name">Energy Solutions LLC</td>
+                        <td>Energy</td>
+                        <td>Oklahoma City, OK</td>
+                        <td>$342,700</td>
+                        <td class="margin-value">$155,800</td>
+                        <td><div class="progress-bar"><div class="progress-fill" style="width: 70%"></div></div></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Chart Grid -->
+        <div class="chart-grid">
+            <div class="chart-card">
+                <div class="chart-title">📊 Industry Distribution</div>
+                <div class="chart-placeholder">Pie Chart: Elite Customers by Industry</div>
+            </div>
+            
+            <div class="chart-card">
+                <div class="chart-title">📍 Geographic Concentration</div>
+                <div class="chart-placeholder">Map: Elite Customer Locations</div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <p>Strikezone Intelligence Platform • Page 2 of 4 • Top 20% Deep Dive</p>
+        </div>
+    </div>
+</body>
+</html>

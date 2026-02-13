@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Page 4: Growth Opportunities - Power BI Design</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            padding: 20px;
+        }
+        .dashboard {
+            max-width: 1920px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.05);
+            padding: 30px;
+            border-radius: 20px;
+        }
+        .header {
+            color: white;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 48px;
+            font-weight: 700;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+            margin-bottom: 10px;
+        }
+        .header p {
+            font-size: 20px;
+            opacity: 0.9;
+        }
+        
+        /* Opportunity Cards Row */
+        .opportunity-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        .opp-card {
+            background: white;
+            border-radius: 25px;
+            padding: 35px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .opp-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+        }
+        .opp-icon {
+            font-size: 52px;
+            margin-bottom: 20px;
+        }
+        .opp-value {
+            font-size: 42px;
+            font-weight: 800;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .opp-label {
+            font-size: 14px;
+            color: #7f8c8d;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* ICP Section */
+        .icp-section {
+            background: white;
+            border-radius: 30px;
+            padding: 45px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            margin-bottom: 30px;
+        }
+        .icp-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .icp-title {
+            font-size: 36px;
+            font-weight: 800;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        .icp-subtitle {
+            font-size: 18px;
+            color: #7f8c8d;
+        }
+        
+        /* ICP Traits Grid */
+        .icp-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        .icp-trait {
+            background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
+            border-radius: 20px;
+            padding: 30px;
+            border-left: 6px solid #4facfe;
+        }
+        .trait-category {
+            font-size: 12px;
+            color: #00838f;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        .trait-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        .trait-insight {
+            font-size: 14px;
+            color: #546e7a;
+        }
+        
+        /* Target List */
+        .target-section {
+            background: white;
+            border-radius: 30px;
+            padding: 45px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            margin-bottom: 30px;
+        }
+        .target-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 35px;
+        }
+        .target-title {
+            font-size: 32px;
+            font-weight: 800;
+            color: #2c3e50;
+        }
+        .export-button {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 14px 35px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(79,172,254,0.4);
+        }
+        
+        /* Target Cards */
+        .target-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+        }
+        .target-card {
+            background: linear-gradient(135deg, #f5fcff 0%, #e0f7fa 100%);
+            border-radius: 20px;
+            padding: 30px;
+            border: 2px solid #b3e5fc;
+            position: relative;
+        }
+        .similarity-score {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 700;
+        }
+        .target-company {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        .target-details {
+            font-size: 15px;
+            color: #546e7a;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+        .match-reasons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .reason-tag {
+            background: #4facfe;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        /* Action Plan */
+        .action-section {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+        }
+        .action-card {
+            background: white;
+            border-radius: 25px;
+            padding: 35px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+        }
+        .action-number {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            line-height: 50px;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+        .action-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        .action-text {
+            font-size: 15px;
+            color: #7f8c8d;
+            line-height: 1.6;
+        }
+        
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            font-size: 16px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Header -->
+        <div class="header">
+            <h1>🚀 GROWTH OPPORTUNITIES</h1>
+            <p>ICP-Based Target Account List</p>
+        </div>
+        
+        <!-- Opportunity Metrics -->
+        <div class="opportunity-row">
+            <div class="opp-card">
+                <div class="opp-icon">🎯</div>
+                <div class="opp-value">156</div>
+                <div class="opp-label">Target Accounts</div>
+            </div>
+            
+            <div class="opp-card">
+                <div class="opp-icon">💰</div>
+                <div class="opp-value">$18.5M</div>
+                <div class="opp-label">Pipeline Value</div>
+            </div>
+            
+            <div class="opp-card">
+                <div class="opp-icon">📈</div>
+                <div class="opp-value">85%</div>
+                <div class="opp-label">Match Score Avg</div>
+            </div>
+            
+            <div class="opp-card">
+                <div class="opp-icon">⭐</div>
+                <div class="opp-value">42</div>
+                <div class="opp-label">Tier 1 Targets</div>
+            </div>
+        </div>
+        
+        <!-- ICP Traits -->
+        <div class="icp-section">
+            <div class="icp-header">
+                <div class="icp-title">🧬 Ideal Customer Profile (ICP)</div>
+                <div class="icp-subtitle">Traits extracted from your Top 20% customers</div>
+            </div>
+            
+            <div class="icp-grid">
+                <div class="icp-trait">
+                    <div class="trait-category">Industry</div>
+                    <div class="trait-value">Manufacturing</div>
+                    <div class="trait-insight">65% of elite customers</div>
+                </div>
+                
+                <div class="icp-trait">
+                    <div class="trait-category">Location</div>
+                    <div class="trait-value">Texas & Oklahoma</div>
+                    <div class="trait-insight">82% concentration</div>
+                </div>
+                
+                <div class="icp-trait">
+                    <div class="trait-category">Company Size</div>
+                    <div class="trait-value">250-2,500 employees</div>
+                    <div class="trait-insight">Sweet spot range</div>
+                </div>
+                
+                <div class="icp-trait">
+                    <div class="trait-category">Revenue Range</div>
+                    <div class="trait-value">$50M - $500M</div>
+                    <div class="trait-insight">Annual revenue</div>
+                </div>
+                
+                <div class="icp-trait">
+                    <div class="trait-category">NAICS Codes</div>
+                    <div class="trait-value">332, 336, 333</div>
+                    <div class="trait-insight">Metal, Auto, Machinery</div>
+                </div>
+                
+                <div class="icp-trait">
+                    <div class="trait-category">Growth Stage</div>
+                    <div class="trait-value">Established</div>
+                    <div class="trait-insight">10+ years in business</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Target Accounts -->
+        <div class="target-section">
+            <div class="target-header">
+                <div class="target-title">🎯 High-Priority Target Accounts</div>
+                <button class="export-button">📥 Export to CRM</button>
+            </div>
+            
+            <div class="target-grid">
+                <div class="target-card">
+                    <div class="similarity-score">94% Match</div>
+                    <div class="target-company">Advanced Manufacturing Corp</div>
+                    <div class="target-details">
+                        <strong>Industry:</strong> Metal Fabrication • <strong>Location:</strong> Fort Worth, TX<br>
+                        <strong>Employees:</strong> 850 • <strong>Revenue:</strong> $180M
+                    </div>
+                    <div class="match-reasons">
+                        <span class="reason-tag">Same Industry</span>
+                        <span class="reason-tag">Same Region</span>
+                        <span class="reason-tag">Similar Size</span>
+                        <span class="reason-tag">Growth Phase</span>
+                    </div>
+                </div>
+                
+                <div class="target-card">
+                    <div class="similarity-score">92% Match</div>
+                    <div class="target-company">Precision Parts Industries</div>
+                    <div class="target-details">
+                        <strong>Industry:</strong> Machinery Manufacturing • <strong>Location:</strong> Oklahoma City, OK<br>
+                        <strong>Employees:</strong> 640 • <strong>Revenue:</strong> $125M
+                    </div>
+                    <div class="match-reasons">
+                        <span class="reason-tag">Same Industry</span>
+                        <span class="reason-tag">Same Region</span>
+                        <span class="reason-tag">Expanding</span>
+                    </div>
+                </div>
+                
+                <div class="target-card">
+                    <div class="similarity-score">90% Match</div>
+                    <div class="target-company">Gulf Coast Fabricators</div>
+                    <div class="target-details">
+                        <strong>Industry:</strong> Industrial Manufacturing • <strong>Location:</strong> Corpus Christi, TX<br>
+                        <strong>Employees:</strong> 520 • <strong>Revenue:</strong> $98M
+                    </div>
+                    <div class="match-reasons">
+                        <span class="reason-tag">Same Industry</span>
+                        <span class="reason-tag">High Growth</span>
+                        <span class="reason-tag">Decision Maker ID'd</span>
+                    </div>
+                </div>
+                
+                <div class="target-card">
+                    <div class="similarity-score">88% Match</div>
+                    <div class="target-company">Southwest Industrial Solutions</div>
+                    <div class="target-details">
+                        <strong>Industry:</strong> Metal Products • <strong>Location:</strong> Lubbock, TX<br>
+                        <strong>Employees:</strong> 430 • <strong>Revenue:</strong> $82M
+                    </div>
+                    <div class="match-reasons">
+                        <span class="reason-tag">Same NAICS</span>
+                        <span class="reason-tag">Target Geography</span>
+                        <span class="reason-tag">Budget Available</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Action Plan -->
+        <div class="action-section">
+            <div class="action-card">
+                <div class="action-number">1</div>
+                <div class="action-title">Enrich Data</div>
+                <div class="action-text">Use Apollo.io to find decision makers at target accounts. Identify VP Operations, Procurement Directors, and C-suite contacts.</div>
+            </div>
+            
+            <div class="action-card">
+                <div class="action-number">2</div>
+                <div class="action-title">Personalize Outreach</div>
+                <div class="action-text">Craft messaging highlighting how you serve similar companies. Reference case studies from elite customers in same vertical.</div>
+            </div>
+            
+            <div class="action-card">
+                <div class="action-number">3</div>
+                <div class="action-title">Execute Campaign</div>
+                <div class="action-text">Launch multi-touch campaign: LinkedIn connection → Email sequence → Phone call. Track engagement and iterate based on response rates.</div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <p>Strikezone Intelligence Platform • Page 4 of 4 • Target Account Generation</p>
+        </div>
+    </div>
+</body>
+</html>
