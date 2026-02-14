@@ -27,6 +27,13 @@ chmod +x setup.sh
 ./setup.sh
 ```
 
+If you ever see DB errors like `relation "ingestion_logs" does not exist`, re-run:
+
+```bash
+cd phase1-app/backend
+npm run db:init:all
+```
+
 ### 2️⃣ Start Backend
 ```bash
 cd backend
@@ -158,7 +165,7 @@ cat backend/.env
 ### No data in dashboard
 ```bash
 # Check data was uploaded
-psql -U postgres -d strikezone_db -c "SELECT COUNT(*) FROM customers;"
+psql -h localhost -U strikezone_user -d strikezone_db -c "SELECT COUNT(*) FROM customers;"
 
 # Recalculate metrics
 curl -X POST http://localhost:5000/api/analytics/calculate

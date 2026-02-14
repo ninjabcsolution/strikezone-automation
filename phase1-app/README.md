@@ -15,16 +15,16 @@ Complete ERP-neutral data ingestion and analytics system.
 # Install PostgreSQL (if needed)
 sudo apt update && sudo apt install postgresql postgresql-contrib
 
-# Create database
+# Create database + user
 sudo -u postgres psql << EOF
-CREATE DATABASE strikezone_db;
-CREATE USER strikezone_user WITH PASSWORD 'your_password';
+CREATE USER strikezone_user WITH PASSWORD 'strikezone123';
+CREATE DATABASE strikezone_db OWNER strikezone_user;
 GRANT ALL PRIVILEGES ON DATABASE strikezone_db TO strikezone_user;
 EOF
 
-# Run schemas
-psql -U postgres -d strikezone_db -f backend/src/models/schema.sql
-psql -U postgres -d strikezone_db -f backend/src/models/phase2_schema.sql
+# Run schemas (or use `npm run db:init:all` from the backend folder)
+psql -h localhost -U strikezone_user -d strikezone_db -f backend/src/models/schema.sql
+psql -h localhost -U strikezone_user -d strikezone_db -f backend/src/models/phase2_schema.sql
 ```
 
 ### 2. Setup Backend
@@ -34,6 +34,7 @@ cd backend
 npm install
 cp .env.example .env
 # Edit .env with your database credentials
+npm run db:init:all
 npm run dev
 # Backend runs on http://localhost:5000
 ```

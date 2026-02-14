@@ -24,10 +24,12 @@ class CSVParser {
     
     if (headerSet.has('customer_id') && headerSet.has('customer_name')) {
       return 'customers';
-    } else if (headerSet.has('order_id') && headerSet.has('order_date')) {
-      return 'orders';
     } else if (headerSet.has('order_line_id')) {
       return 'order_lines';
+    } else if (headerSet.has('order_id') && headerSet.has('order_date')) {
+      // OrderLines also contains order_id + order_date, so this check must come
+      // AFTER `order_line_id`.
+      return 'orders';
     } else if (headerSet.has('product_id') && headerSet.has('product_name')) {
       return 'products';
     }

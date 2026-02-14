@@ -10,21 +10,21 @@ class Validator {
       city: Joi.string().allow('', null),
       state: Joi.string().allow('', null),
       country: Joi.string().allow('', null),
-      employee_count: Joi.number().allow('', null),
-      annual_revenue: Joi.number().allow('', null),
-    });
+      employee_count: Joi.alternatives().try(Joi.number(), Joi.string().allow('', null)).optional(),
+      annual_revenue: Joi.alternatives().try(Joi.number(), Joi.string().allow('', null)).optional(),
+    }).unknown(true);
     return this.validateRecords(records, schema);
   }
 
   validateOrders(records) {
     const schema = Joi.object({
       order_id: Joi.string().required(),
-      order_date: Joi.date().iso().required(),
+      order_date: Joi.alternatives().try(Joi.date().iso(), Joi.string()).required(),
       customer_id: Joi.string().required(),
-      order_revenue: Joi.number().required(),
-      order_cogs: Joi.number().allow('', null),
-      gross_margin: Joi.number().allow('', null),
-    });
+      order_revenue: Joi.alternatives().try(Joi.number(), Joi.string()).required(),
+      order_cogs: Joi.alternatives().try(Joi.number(), Joi.string().allow('', null)).optional(),
+      gross_margin: Joi.alternatives().try(Joi.number(), Joi.string().allow('', null)).optional(),
+    }).unknown(true);
     return this.validateRecords(records, schema);
   }
 
@@ -33,13 +33,13 @@ class Validator {
       order_line_id: Joi.string().required(),
       order_id: Joi.string().required(),
       customer_id: Joi.string().required(),
-      order_date: Joi.date().iso().required(),
+      order_date: Joi.alternatives().try(Joi.date().iso(), Joi.string()).required(),
       product_id: Joi.string().allow('', null),
       product_category: Joi.string().allow('', null),
-      quantity: Joi.number().allow('', null),
-      line_revenue: Joi.number().allow('', null),
-      line_cogs: Joi.number().allow('', null),
-    });
+      quantity: Joi.alternatives().try(Joi.number(), Joi.string().allow('', null)).optional(),
+      line_revenue: Joi.alternatives().try(Joi.number(), Joi.string().allow('', null)).optional(),
+      line_cogs: Joi.alternatives().try(Joi.number(), Joi.string().allow('', null)).optional(),
+    }).unknown(true);
     return this.validateRecords(records, schema);
   }
 
@@ -48,7 +48,7 @@ class Validator {
       product_id: Joi.string().required(),
       product_name: Joi.string().required(),
       product_category: Joi.string().allow('', null),
-    });
+    }).unknown(true);
     return this.validateRecords(records, schema);
   }
 

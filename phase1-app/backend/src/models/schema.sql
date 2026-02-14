@@ -83,3 +83,31 @@ CREATE TABLE ingestion_logs (
 
 CREATE INDEX idx_ingestion_logs_status ON ingestion_logs(status);
 CREATE INDEX idx_ingestion_logs_date ON ingestion_logs(ingested_at);
+
+-- Customer metrics table (used for Top 20% analysis)
+DROP TABLE IF EXISTS customer_metrics CASCADE;
+
+CREATE TABLE customer_metrics (
+    customer_id VARCHAR(50) PRIMARY KEY REFERENCES customers(customer_id),
+    total_revenue NUMERIC(15, 2) DEFAULT 0,
+    total_gross_margin NUMERIC(15, 2) DEFAULT 0,
+    gross_margin_percent NUMERIC(8, 2) DEFAULT 0,
+    order_count INTEGER DEFAULT 0,
+    avg_order_value NUMERIC(15, 2) DEFAULT 0,
+    first_order_date DATE,
+    last_order_date DATE,
+    days_as_customer INTEGER DEFAULT 0,
+    order_frequency NUMERIC(10, 4) DEFAULT 0,
+    active_months INTEGER DEFAULT 0,
+    product_categories_count INTEGER DEFAULT 0,
+    recency_days INTEGER DEFAULT 0,
+    consistency_score NUMERIC(8, 2) DEFAULT 0,
+    percentile_rank INTEGER,
+    is_top_20 BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_customer_metrics_margin ON customer_metrics(total_gross_margin DESC);
+CREATE INDEX idx_customer_metrics_top20 ON customer_metrics(is_top_20);
+CREATE INDEX idx_customer_metrics_revenue ON customer_metrics(total_revenue DESC);

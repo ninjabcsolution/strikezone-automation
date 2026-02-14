@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+
 # Strikezone Setup Script
 
 echo "🚀 Strikezone Setup Script"
@@ -6,6 +8,7 @@ echo "=========================="
 
 # Check prerequisites
 command -v node >/dev/null 2>&1 || { echo "❌ Node.js is required but not installed. Aborting." >&2; exit 1; }
+command -v npm >/dev/null 2>&1 || { echo "❌ npm is required but not installed. Aborting." >&2; exit 1; }
 command -v psql >/dev/null 2>&1 || { echo "❌ PostgreSQL is required but not installed. Aborting." >&2; exit 1; }
 
 echo "✓ Prerequisites found"
@@ -13,20 +16,29 @@ echo "✓ Prerequisites found"
 # Setup Database
 echo ""
 echo "📦 Setting up database..."
-sudo -u postgres psql << EOF
-CREATE DATABASE IF NOT EXISTS strikezone_db;
-CREATE USER IF NOT EXISTS strikezone_user WITH PASSWORD 'strikezone123';
-GRANT ALL PRIVILEGES ON DATABASE strikezone_db TO strikezone_user;
-\q
+
+DB_NAME="strikezone_db"
+DB_USER="strikezone_user"
+DB_PASSWORD="strikezone123"
+
+sudo -u postgres psql -v ON_ERROR_STOP=1 <<EOF
+DO \$\$
+BEGIN
+  IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '${DB_USER}') THEN
+    CREATE ROLE ${DB_USER} LOGIN PASSWORD '${DB_PASSWORD}';
+  ELSE
+    ALTER ROLE ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';
+  END IF;
+END
+\$\$;
+
+SELECT format('CREATE DATABASE %I OWNER %I', '${DB_NAME}', '${DB_USER}')
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '${DB_NAME}')\gexec
+
+GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER};
 EOF
 
 echo "✓ Database created"
-
-# Run schemas
-echo "📊 Creating database tables..."
-psql -U postgres -d strikezone_db -f backend/src/models/schema.sql > /dev/null 2>&1
-psql -U postgres -d strikezone_db -f backend/src/models/phase2_schema.sql > /dev/null 2>&1
-echo "✓ Tables created"
 
 # Setup Backend
 echo ""
@@ -38,11 +50,15 @@ if [ ! -f ".env" ]; then
 fi
 
 if [ ! -d "node_modules" ]; then
-    npm install > /dev/null 2>&1
+    npm install
     echo "✓ Backend dependencies installed"
 else
     echo "✓ Backend dependencies already installed"
 fi
+
+echo "📊 Initializing database tables..."
+npm run db:init:all
+echo "✓ Tables created"
 cd ..
 
 # Setup Frontend
@@ -50,7 +66,7 @@ echo ""
 echo "🎨 Setting up frontend..."
 cd frontend
 if [ -f "package.json" ] && [ ! -d "node_modules" ]; then
-    npm install > /dev/null 2>&1
+    npm install
     echo "✓ Frontend dependencies installed"
 elif [ ! -f "package.json" ]; then
     echo "⚠️  Frontend package.json not found (will be created)"

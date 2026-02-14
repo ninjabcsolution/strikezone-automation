@@ -22,9 +22,9 @@ CREATE TABLE IF NOT EXISTS customer_metrics (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_customer_metrics_top20 ON customer_metrics(is_top_20);
-CREATE INDEX idx_customer_metrics_margin ON customer_metrics(total_gross_margin DESC);
-CREATE INDEX idx_customer_metrics_percentile ON customer_metrics(percentile_rank);
+CREATE INDEX IF NOT EXISTS idx_customer_metrics_top20 ON customer_metrics(is_top_20);
+CREATE INDEX IF NOT EXISTS idx_customer_metrics_margin ON customer_metrics(total_gross_margin DESC);
+CREATE INDEX IF NOT EXISTS idx_customer_metrics_percentile ON customer_metrics(percentile_rank);
 
 -- ICP traits (extracted patterns)
 CREATE TABLE IF NOT EXISTS icp_traits (
@@ -39,8 +39,8 @@ CREATE TABLE IF NOT EXISTS icp_traits (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_icp_traits_category ON icp_traits(trait_category);
-CREATE INDEX idx_icp_traits_importance ON icp_traits(importance_score DESC);
+CREATE INDEX IF NOT EXISTS idx_icp_traits_category ON icp_traits(trait_category);
+CREATE INDEX IF NOT EXISTS idx_icp_traits_importance ON icp_traits(importance_score DESC);
 
 -- Look-alike targets
 CREATE TABLE IF NOT EXISTS lookalike_targets (
@@ -64,6 +64,6 @@ CREATE TABLE IF NOT EXISTS lookalike_targets (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_lookalike_targets_tier ON lookalike_targets(tier);
-CREATE INDEX idx_lookalike_targets_score ON lookalike_targets(similarity_score DESC);
-CREATE INDEX idx_lookalike_targets_status ON lookalike_targets(status);
+CREATE INDEX IF NOT EXISTS idx_lookalike_targets_tier ON lookalike_targets(tier);
+CREATE INDEX IF NOT EXISTS idx_lookalike_targets_score ON lookalike_targets(similarity_score DESC);
+CREATE INDEX IF NOT EXISTS idx_lookalike_targets_status ON lookalike_targets(status);
