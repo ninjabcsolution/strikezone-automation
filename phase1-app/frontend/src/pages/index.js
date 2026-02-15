@@ -74,6 +74,22 @@ export default function Home() {
         >
           📊 CEO Dashboard
         </a>
+
+        <a 
+          href="/approval-portal" 
+          style={{
+            marginLeft: '12px',
+            padding: '12px 24px',
+            background: '#2ECC71',
+            color: 'white',
+            textDecoration: 'none',
+            borderRadius: '8px',
+            fontWeight: '600',
+            boxShadow: '0 4px 12px rgba(46, 204, 113, 0.25)',
+          }}
+        >
+          ✅ Approval Portal
+        </a>
       </div>
 
       <div style={{ border: '2px dashed #ccc', padding: '40px', textAlign: 'center', marginTop: '20px', borderRadius: '8px' }}>

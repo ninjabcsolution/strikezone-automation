@@ -99,6 +99,18 @@ phase1-app/
 - `GET /api/analytics/top20` - Get Top 20% customers
 - `GET /api/analytics/stats` - Get summary statistics
 
+### Phase 3: Targets + Approval Portal
+- `GET /api/targets` - List targets (filters: status, tier, q)
+- `POST /api/targets` - Create target (manual)
+- `PATCH /api/targets/:id` - Edit target (tier/notes/etc.)
+- `POST /api/targets/:id/approve` - Approve/Reject target (body: {action: approved|rejected})
+- `GET /api/targets/:id/approvals` - Approval history
+- `GET /api/targets/export.csv` - Export targets CSV
+
+### Phase 3: Look-alike Generation
+- `GET /api/lookalike/icp-profile` - Auto-derived ICP profile from Top 20%
+- `POST /api/lookalike/generate` - Generate targets from Apollo (requires `APOLLO_API_KEY`)
+
 ### Health
 - `GET /api/health` - Check API status
 
@@ -142,7 +154,7 @@ curl -X POST http://localhost:5000/api/upload \
 1. Upload your ERP data (CSV exports)
 2. Run analytics to identify Top 20%
 3. Review ICP traits
-4. Generate look-alike targets (Phase 2)
+4. Use the Approval Portal to review/edit/approve targets (Phase 3)
 
 ## Support
 

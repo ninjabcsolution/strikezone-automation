@@ -50,6 +50,8 @@ npm run dev
 
 ## 🎯 Usage Workflow
 
+> This follows the **original workflow**: **Dynamics/ERP → Power BI → Segmented Export → Approval Portal → Outreach**.
+
 ### Step 1: Upload Data
 1. Go to http://localhost:3000
 2. Upload CSV files in this order:
@@ -69,6 +71,16 @@ npm run dev
   - Margin analysis (4 KPI cards)
   - Elite customers table
   - Business insights
+
+### (Phase 3) Step 4: Review + Approve Targets
+- Click **"✅ Approval Portal"**
+- Import targets exported from Power BI (Tier/Segment list), or create targets manually
+- Review reason codes + tier, adjust notes/tier, then Approve/Reject
+- Export approved targets as CSV
+
+⚠️ **Apollo note:** Some Apollo endpoints (like company search) require a paid plan/API access. If you see an error like:
+`... not accessible with this api_key on a free plan ...`
+you can still use the portal with **manual target creation** (or CSV import/export), and enable Apollo once your plan supports it.
 
 ## 📱 Two Interfaces
 
@@ -130,6 +142,9 @@ curl -X POST http://localhost:5000/api/analytics/calculate
 
 # View results
 open http://localhost:3000/ceo-dashboard
+
+# Phase 3 approval portal
+open http://localhost:3000/approval-portal
 ```
 
 ## 🎯 Demo Script for CEO

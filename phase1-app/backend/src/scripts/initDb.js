@@ -14,7 +14,7 @@ require('dotenv').config();
 
 function printHelp() {
   // Keep this short so it’s readable in CI / terminals
-  console.log(`\nStrikezone DB Init\n\nUsage:\n  node src/scripts/initDb.js [--all] [--phase2-only] [--help]\n\nOptions:\n  --all          Apply schema.sql then phase2_schema.sql\n  --phase2-only  Apply only phase2_schema.sql (non-destructive IF NOT EXISTS)\n  --help         Show this help\n`);
+  console.log(`\nStrikezone DB Init\n\nUsage:\n  node src/scripts/initDb.js [--all] [--phase2-only] [--phase3-only] [--help]\n\nOptions:\n  --all          Apply schema.sql (Phase 1) + phase2_schema.sql + phase3_schema.sql\n  --phase2-only  Apply phase2_schema.sql + phase3_schema.sql (non-destructive IF NOT EXISTS)\n  --phase3-only  Apply phase3_schema.sql only (non-destructive)\n  --help         Show this help\n`);
 }
 
 async function applySqlFile(client, filePath) {
@@ -31,6 +31,14 @@ async function main() {
 
   const applyAll = args.has('--all');
   const phase2Only = args.has('--phase2-only');
+  const phase3Only = args.has('--phase3-only');
+
+  const modeCount = [applyAll, phase2Only, phase3Only].filter(Boolean).length;
+  if (modeCount > 1) {
+    console.error('❌ Please choose only one of: --all, --phase2-only, --phase3-only');
+    process.exitCode = 1;
+    return;
+  }
 
   const pool = new Pool({
     host: process.env.DB_HOST || 'localhost',
@@ -43,6 +51,7 @@ async function main() {
 
   const schemaV1Path = path.join(__dirname, '../models/schema.sql');
   const schemaV2Path = path.join(__dirname, '../models/phase2_schema.sql');
+  const schemaV3Path = path.join(__dirname, '../models/phase3_schema.sql');
 
   const client = await pool.connect();
   try {
@@ -52,7 +61,7 @@ async function main() {
 
     await client.query('BEGIN');
 
-    if (!phase2Only) {
+    if (!phase2Only && !phase3Only) {
       console.log('   • Applying Phase 1 schema.sql (DESTRUCTIVE: drops tables if they exist)');
       await applySqlFile(client, schemaV1Path);
     }
@@ -60,6 +69,11 @@ async function main() {
     if (applyAll || phase2Only) {
       console.log('   • Applying Phase 2 phase2_schema.sql (CREATE TABLE IF NOT EXISTS)');
       await applySqlFile(client, schemaV2Path);
+    }
+
+    if (applyAll || phase2Only || phase3Only) {
+      console.log('   • Applying Phase 3 phase3_schema.sql (approval portal + audit log)');
+      await applySqlFile(client, schemaV3Path);
     }
 
     await client.query('COMMIT');
