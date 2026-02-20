@@ -25,6 +25,8 @@ export default function ApprovalPortal() {
 
   const [statusFilter, setStatusFilter] = useState('pending_review');
   const [tierFilter, setTierFilter] = useState('');
+  const [sourceFilter, setSourceFilter] = useState('');
+  const [segmentFilter, setSegmentFilter] = useState('');
   const [query, setQuery] = useState('');
 
   const [targets, setTargets] = useState([]);
@@ -34,8 +36,15 @@ export default function ApprovalPortal() {
   const [apolloQuery, setApolloQuery] = useState('industrial');
   const [apolloLoading, setApolloLoading] = useState(false);
 
+  const [winbackInactiveDays, setWinbackInactiveDays] = useState(180);
+  const [winbackLimit, setWinbackLimit] = useState(200);
+  const [winbackLoading, setWinbackLoading] = useState(false);
+
   const [pbiJsonText, setPbiJsonText] = useState('');
   const [pbiImporting, setPbiImporting] = useState(false);
+  const [pbiCsvFile, setPbiCsvFile] = useState(null);
+  const [pbiCsvImporting, setPbiCsvImporting] = useState(false);
+  const [pbiFileInputKey, setPbiFileInputKey] = useState(0);
 
   const [createForm, setCreateForm] = useState({
     company_name: '',
@@ -52,9 +61,11 @@ export default function ApprovalPortal() {
     const params = new URLSearchParams();
     if (statusFilter) params.set('status', statusFilter);
     if (tierFilter) params.set('tier', tierFilter);
+    if (sourceFilter) params.set('source', sourceFilter);
+    if (segmentFilter) params.set('segment', segmentFilter);
     if (query) params.set('q', query);
     return `${API_URL}/api/targets/export.csv?${params.toString()}`;
-  }, [statusFilter, tierFilter, query]);
+  }, [statusFilter, tierFilter, sourceFilter, segmentFilter, query]);
 
   const fetchTargets = async () => {
     setLoading(true);
@@ -65,6 +76,8 @@ export default function ApprovalPortal() {
       params.set('limit', '200');
       if (statusFilter) params.set('status', statusFilter);
       if (tierFilter) params.set('tier', tierFilter);
+      if (sourceFilter) params.set('source', sourceFilter);
+      if (segmentFilter) params.set('segment', segmentFilter);
       if (query) params.set('q', query);
 
       const res = await fetch(`${API_URL}/api/targets?${params.toString()}`);
@@ -136,6 +149,29 @@ export default function ApprovalPortal() {
     }
   };
 
+  const handleGenerateWinback = async () => {
+    setWinbackLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_URL}/api/winback/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Actor': actor,
+        },
+        body: JSON.stringify({ inactiveDays: Number(winbackInactiveDays), limit: Number(winbackLimit) }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.message || 'Failed to generate win-back targets');
+      alert(`Win-back generation complete. Inserted: ${data.inserted}, Updated: ${data.updated}, Candidates: ${data.totalCandidates}`);
+      await fetchTargets();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setWinbackLoading(false);
+    }
+  };
+
   const handleImportPowerBIJson = async () => {
     setPbiImporting(true);
     setError(null);
@@ -160,6 +196,36 @@ export default function ApprovalPortal() {
       setError(e.message);
     } finally {
       setPbiImporting(false);
+    }
+  };
+
+  const handleImportPowerBICsv = async () => {
+    if (!pbiCsvFile) return;
+    setPbiCsvImporting(true);
+    setError(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', pbiCsvFile);
+
+      const res = await fetch(`${API_URL}/api/powerbi/import/targets-csv`, {
+        method: 'POST',
+        headers: {
+          'X-Actor': actor,
+        },
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.message || 'Failed to import Power BI CSV');
+      alert(
+        `Imported Power BI CSV. Rows: ${data.totalRows}. Inserted: ${data.inserted}, Updated: ${data.updated}, Failed: ${data.failed}`
+      );
+      setPbiCsvFile(null);
+      setPbiFileInputKey((k) => k + 1);
+      await fetchTargets();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setPbiCsvImporting(false);
     }
   };
 
@@ -251,11 +317,66 @@ export default function ApprovalPortal() {
       </section>
 
       <section style={styles.card}>
+        <h2 style={styles.sectionTitle}>Generate (Win-back)</h2>
+        <div style={styles.row}>
+          <label style={styles.label}>Inactive Days</label>
+          <input
+            type="number"
+            value={winbackInactiveDays}
+            onChange={(e) => setWinbackInactiveDays(e.target.value)}
+            style={styles.input}
+          />
+          <label style={styles.label}>Limit</label>
+          <input
+            type="number"
+            value={winbackLimit}
+            onChange={(e) => setWinbackLimit(e.target.value)}
+            style={styles.input}
+          />
+          <button
+            onClick={handleGenerateWinback}
+            disabled={winbackLoading}
+            style={{ ...styles.button, background: winbackLoading ? '#999' : '#E67E22' }}
+          >
+            {winbackLoading ? 'Generating…' : 'Generate Win-back Targets'}
+          </button>
+        </div>
+        <div style={styles.hint}>
+          Creates targets from existing customers who have been inactive for N days but were historically high-margin.
+        </div>
+      </section>
+
+      <section style={styles.card}>
         <h2 style={styles.sectionTitle}>Import Targets (Power BI Export)</h2>
         <div style={styles.hint}>
-          Paste a JSON array exported from Power BI (or converted from CSV). Each record should include at least <code>company_name</code> and one stable ID
+          Upload the CSV you exported from Power BI (recommended), or paste a JSON array.
+          Each record should include at least <code>company_name</code> and one stable ID
           (<code>account_id</code> recommended, otherwise <code>domain</code>).
         </div>
+
+        <div style={{ ...styles.row, marginTop: 10 }}>
+          <label style={styles.label}>CSV file</label>
+          <input
+            key={pbiFileInputKey}
+            type="file"
+            accept=".csv"
+            onChange={(e) => setPbiCsvFile(e.target.files?.[0] || null)}
+            style={styles.fileInput}
+          />
+          <button
+            onClick={handleImportPowerBICsv}
+            disabled={pbiCsvImporting || !pbiCsvFile}
+            style={{ ...styles.button, background: pbiCsvImporting ? '#999' : '#F39C12' }}
+          >
+            {pbiCsvImporting ? 'Importing…' : 'Import Power BI CSV'}
+          </button>
+        </div>
+
+        <div style={styles.hint}>
+          Recommended columns: <code>account_id</code>, <code>company_name</code>, <code>domain</code>, <code>tier</code>, <code>segment</code>,
+          <code>similarity_score</code>, <code>opportunity_score</code>, <code>reason_codes</code>.
+        </div>
+
         <textarea
           value={pbiJsonText}
           onChange={(e) => setPbiJsonText(e.target.value)}
@@ -356,6 +477,29 @@ export default function ApprovalPortal() {
             </select>
           </div>
 
+          <div style={styles.filterItem}>
+            <label style={styles.label}>Source</label>
+            <select value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)} style={styles.select}>
+              <option value="">All</option>
+              <option value="powerbi">Power BI</option>
+              <option value="winback">Win-back</option>
+              <option value="manual">Manual</option>
+              <option value="apollo">Apollo</option>
+            </select>
+          </div>
+
+          <div style={styles.filterItem}>
+            <label style={styles.label}>Segment</label>
+            <select value={segmentFilter} onChange={(e) => setSegmentFilter(e.target.value)} style={styles.select}>
+              <option value="">All</option>
+              <option value="Strategic">Strategic</option>
+              <option value="WinBack">WinBack</option>
+              <option value="A">A</option>
+              <option value="B">B</option>
+              <option value="C">C</option>
+            </select>
+          </div>
+
           <div style={{ ...styles.filterItem, flex: 2 }}>
             <label style={styles.label}>Search</label>
             <input value={query} onChange={(e) => setQuery(e.target.value)} style={styles.input} placeholder="Company/domain" />
@@ -387,6 +531,7 @@ export default function ApprovalPortal() {
                   <th style={styles.th}>Employees</th>
                   <th style={styles.th}>Revenue</th>
                   <th style={styles.th}>Tier</th>
+                  <th style={styles.th}>Segment</th>
                   <th style={styles.th}>Similarity</th>
                   <th style={styles.th}>Opportunity</th>
                   <th style={styles.th}>Status</th>
@@ -467,6 +612,7 @@ function TargetRow({ target, onUpdate, onApprove }) {
           <option value="C">C</option>
         </select>
       </td>
+      <td style={styles.td}>{target.segment || '—'}</td>
       <td style={styles.td}>{formatNumber(target.similarity_score)}</td>
       <td style={styles.td}>{formatNumber(target.opportunity_score)}</td>
       <td style={styles.td}>{target.status}</td>
@@ -571,6 +717,15 @@ const styles = {
     fontSize: 14,
     flex: 1,
     minWidth: 220,
+  },
+  fileInput: {
+    padding: '10px 12px',
+    borderRadius: 8,
+    border: '1px solid #ddd',
+    fontSize: 14,
+    flex: 2,
+    minWidth: 260,
+    background: 'white',
   },
   select: {
     padding: '10px 12px',

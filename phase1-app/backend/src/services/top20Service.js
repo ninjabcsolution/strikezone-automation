@@ -8,30 +8,61 @@ class Top20Service {
       await client.query('BEGIN');
       await client.query('TRUNCATE TABLE customer_metrics');
       
+      // IMPORTANT: avoid joining orders directly to order_lines when summing order revenue/margin.
+      // That join multiplies orders by number of lines and inflates totals.
       await client.query(`
+        WITH order_aggs AS (
+          SELECT
+            customer_id,
+            COALESCE(SUM(order_revenue), 0) AS total_revenue,
+            COALESCE(SUM(gross_margin), 0) AS total_gross_margin,
+            COUNT(order_id) AS order_count,
+            MIN(order_date) AS first_order_date,
+            MAX(order_date) AS last_order_date,
+            COUNT(DISTINCT DATE_TRUNC('month', order_date)) AS active_months
+          FROM orders
+          GROUP BY customer_id
+        ),
+        category_aggs AS (
+          SELECT
+            customer_id,
+            COUNT(DISTINCT product_category) AS product_categories_count
+          FROM order_lines
+          WHERE product_category IS NOT NULL AND product_category <> ''
+          GROUP BY customer_id
+        )
         INSERT INTO customer_metrics (
           customer_id, total_revenue, total_gross_margin, gross_margin_percent,
           order_count, avg_order_value, first_order_date, last_order_date,
           days_as_customer, order_frequency, active_months, product_categories_count, recency_days
         )
-        SELECT 
+        SELECT
           c.customer_id,
-          COALESCE(SUM(o.order_revenue), 0) as total_revenue,
-          COALESCE(SUM(o.gross_margin), 0) as total_gross_margin,
-          CASE WHEN SUM(o.order_revenue) > 0 THEN (SUM(o.gross_margin) / SUM(o.order_revenue) * 100) ELSE 0 END as gross_margin_percent,
-          COUNT(o.order_id) as order_count,
-          CASE WHEN COUNT(o.order_id) > 0 THEN SUM(o.order_revenue) / COUNT(o.order_id) ELSE 0 END as avg_order_value,
-          MIN(o.order_date) as first_order_date,
-          MAX(o.order_date) as last_order_date,
-          COALESCE(MAX(o.order_date) - MIN(o.order_date), 0) as days_as_customer,
-          CASE WHEN MAX(o.order_date) - MIN(o.order_date) > 0 THEN COUNT(o.order_id)::NUMERIC / ((MAX(o.order_date) - MIN(o.order_date)) / 30.0) ELSE 0 END as order_frequency,
-          COUNT(DISTINCT DATE_TRUNC('month', o.order_date)) as active_months,
-          COUNT(DISTINCT ol.product_category) as product_categories_count,
-          CURRENT_DATE - MAX(o.order_date) as recency_days
+          COALESCE(o.total_revenue, 0) AS total_revenue,
+          COALESCE(o.total_gross_margin, 0) AS total_gross_margin,
+          CASE
+            WHEN COALESCE(o.total_revenue, 0) > 0 THEN (COALESCE(o.total_gross_margin, 0) / o.total_revenue * 100)
+            ELSE 0
+          END AS gross_margin_percent,
+          COALESCE(o.order_count, 0) AS order_count,
+          CASE
+            WHEN COALESCE(o.order_count, 0) > 0 THEN (o.total_revenue / o.order_count)
+            ELSE 0
+          END AS avg_order_value,
+          o.first_order_date,
+          o.last_order_date,
+          COALESCE(o.last_order_date - o.first_order_date, 0) AS days_as_customer,
+          CASE
+            WHEN o.last_order_date IS NOT NULL AND o.first_order_date IS NOT NULL AND (o.last_order_date - o.first_order_date) > 0
+              THEN o.order_count::NUMERIC / ((o.last_order_date - o.first_order_date) / 30.0)
+            ELSE 0
+          END AS order_frequency,
+          COALESCE(o.active_months, 0) AS active_months,
+          COALESCE(cat.product_categories_count, 0) AS product_categories_count,
+          CASE WHEN o.last_order_date IS NOT NULL THEN (CURRENT_DATE - o.last_order_date) ELSE NULL END AS recency_days
         FROM customers c
-        LEFT JOIN orders o ON c.customer_id = o.customer_id
-        LEFT JOIN order_lines ol ON o.order_id = ol.order_id
-        GROUP BY c.customer_id
+        LEFT JOIN order_aggs o ON c.customer_id = o.customer_id
+        LEFT JOIN category_aggs cat ON c.customer_id = cat.customer_id;
       `);
 
       await client.query(`

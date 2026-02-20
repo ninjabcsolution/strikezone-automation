@@ -1,5 +1,7 @@
 import { useState } from 'react';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
 export default function Home() {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -22,7 +24,7 @@ export default function Home() {
     formData.append('file', file);
 
     try {
-      const response = await fetch('http://localhost:5000/api/upload', {
+      const response = await fetch(`${API_URL}/api/upload`, {
         method: 'POST',
         body: formData,
       });
@@ -43,7 +45,7 @@ export default function Home() {
 
   const handleCalculateMetrics = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/analytics/calculate', {
+      const response = await fetch(`${API_URL}/api/analytics/calculate`, {
         method: 'POST',
       });
       const data = await response.json();
@@ -89,6 +91,22 @@ export default function Home() {
           }}
         >
           ✅ Approval Portal
+        </a>
+
+        <a 
+          href="/icp-dashboard" 
+          style={{
+            marginLeft: '12px',
+            padding: '12px 24px',
+            background: '#F39C12',
+            color: 'white',
+            textDecoration: 'none',
+            borderRadius: '8px',
+            fontWeight: '600',
+            boxShadow: '0 4px 12px rgba(243, 156, 18, 0.25)',
+          }}
+        >
+          🧬 ICP Dashboard
         </a>
       </div>
 

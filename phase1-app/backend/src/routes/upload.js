@@ -2,6 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const csvParser = require('../services/csvParser');
 const validator = require('../services/validator');
 const ingestionService = require('../services/ingestion');
@@ -15,13 +16,24 @@ const storage = multer.diskStorage({
     if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
     cb(null, uploadDir);
   },
-  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
+  // Never trust `originalname` for filesystem paths (it can contain path separators)
+  // Generate a safe filename and keep the original name only for display/logging.
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname || '').toLowerCase();
+    const safeExt = ext === '.csv' ? '.csv' : '';
+    const rand = crypto.randomBytes(8).toString('hex');
+    cb(null, `${Date.now()}-${rand}${safeExt}`);
+  },
 });
 
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
-    if (file.mimetype === 'text/csv' || path.extname(file.originalname) === '.csv') {
+    const ext = path.extname(file.originalname || '').toLowerCase();
+    const mime = String(file.mimetype || '').toLowerCase();
+    const allowedMimes = new Set(['text/csv', 'application/csv', 'application/vnd.ms-excel']);
+
+    if (ext === '.csv' || allowedMimes.has(mime)) {
       cb(null, true);
     } else {
       cb(new Error('Only CSV files allowed'));
@@ -38,7 +50,10 @@ router.post('/', upload.single('file'), async (req, res) => {
     const fileName = req.file.originalname;
     const records = await csvParser.parseCSV(filePath);
     
-    if (records.length === 0) return res.status(400).json({ error: 'CSV file is empty' });
+    if (records.length === 0) {
+      fs.unlinkSync(filePath);
+      return res.status(400).json({ error: 'CSV file is empty' });
+    }
 
     const headers = Object.keys(records[0]);
     const fileType = csvParser.detectFileType(headers);

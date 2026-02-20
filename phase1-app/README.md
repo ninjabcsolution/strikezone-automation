@@ -67,6 +67,12 @@ curl http://localhost:5000/api/analytics/top20
 curl http://localhost:5000/api/analytics/stats
 ```
 
+### UI Pages
+- Ingestion / Upload: `http://localhost:3000/`
+- CEO Dashboard: `http://localhost:3000/ceo-dashboard`
+- Approval Portal: `http://localhost:3000/approval-portal`
+- ICP Dashboard (Phase 2B): `http://localhost:3000/icp-dashboard`
+
 ## Project Structure
 
 ```
@@ -110,6 +116,16 @@ phase1-app/
 ### Phase 3: Look-alike Generation
 - `GET /api/lookalike/icp-profile` - Auto-derived ICP profile from Top 20%
 - `POST /api/lookalike/generate` - Generate targets from Apollo (requires `APOLLO_API_KEY`)
+
+### Phase 2B: ICP Trait Extraction
+- `POST /api/icp/calculate` - Compute ICP traits (lift analysis: Top20 vs Others)
+- `GET /api/icp/summary` - 1-page ICP summary payload
+- `GET /api/icp/export.csv` - Export traits as CSV
+- `GET /api/icp/export.md` - Export summary as Markdown
+- `GET /api/icp/external-filters` - Vendor-agnostic filter values for Apollo/LinkedIn UI
+
+### Phase 2C: Win-back Targeting
+- `POST /api/winback/generate` - Create win-back targets (inactive customers)
 
 ### Health
 - `GET /api/health` - Check API status
