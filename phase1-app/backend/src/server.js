@@ -7,24 +7,56 @@ const analyticsRoutes = require('./routes/analytics');
 const targetsRoutes = require('./routes/targets');
 const lookalikeRoutes = require('./routes/lookalike');
 const powerbiRoutes = require('./routes/powerbi');
+const icpRoutes = require('./routes/icp');
+const winbackRoutes = require('./routes/winback');
+const enrichmentRoutes = require('./routes/enrichment');
 const { pool } = require('./config/database');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+app.disable('x-powered-by');
+
+const DEFAULT_CORS_ORIGINS = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:3002',
+  'http://localhost:3003',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:3001',
+  'http://127.0.0.1:3002',
+  'http://127.0.0.1:3003',
+];
+
+const envCors = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+const allowAllCors = envCors.includes('*');
+const allowedCorsOrigins = envCors.length ? envCors : DEFAULT_CORS_ORIGINS;
+
 app.use(cors({
-  origin: '*',
+  origin: (origin, cb) => {
+    // Allow non-browser clients (curl/postman) with no Origin header
+    if (!origin) return cb(null, true);
+    if (allowAllCors) return cb(null, true);
+    if (allowedCorsOrigins.includes(origin)) return cb(null, true);
+    return cb(new Error(`CORS blocked for origin: ${origin}`));
+  },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'X-Actor'],
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 app.use('/api/upload', uploadRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/targets', targetsRoutes);
 app.use('/api/lookalike', lookalikeRoutes);
 app.use('/api/powerbi', powerbiRoutes);
+app.use('/api/icp', icpRoutes);
+app.use('/api/winback', winbackRoutes);
+app.use('/api/enrichment', enrichmentRoutes);
 
 app.get('/api/health', async (req, res) => {
   try {
@@ -37,6 +69,9 @@ app.get('/api/health', async (req, res) => {
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
+  if (String(err.message || '').startsWith('CORS blocked for origin:')) {
+    return res.status(403).json({ error: 'CORS blocked', message: err.message });
+  }
   res.status(500).json({ error: 'Something went wrong!', message: err.message });
 });
 

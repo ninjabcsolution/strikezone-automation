@@ -74,9 +74,16 @@ npm run dev
 
 ### (Phase 3) Step 4: Review + Approve Targets
 - Click **"✅ Approval Portal"**
-- Import targets exported from Power BI (Tier/Segment list), or create targets manually
+- Import targets exported from Power BI (Tier/Segment list) via **CSV upload** (recommended) or JSON paste, or create targets manually
 - Review reason codes + tier, adjust notes/tier, then Approve/Reject
 - Export approved targets as CSV
+
+### (Phase 2B) ICP Dashboard
+- Open: http://localhost:3000/icp-dashboard
+- Click **Recalculate ICP Traits** after analytics calculation
+- Export:
+  - Traits CSV (for review / sharing)
+  - ICP Summary Markdown (1-page)
 
 ⚠️ **Apollo note:** Some Apollo endpoints (like company search) require a paid plan/API access. If you see an error like:
 `... not accessible with this api_key on a free plan ...`

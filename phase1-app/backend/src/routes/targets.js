@@ -12,11 +12,13 @@ router.get('/', async (req, res) => {
   try {
     const status = req.query.status || undefined;
     const tier = req.query.tier || undefined;
+    const source = req.query.source || undefined;
+    const segment = req.query.segment || undefined;
     const q = req.query.q || undefined;
     const limit = req.query.limit ? Math.min(parseInt(req.query.limit, 10) || 100, 500) : 100;
     const offset = req.query.offset ? parseInt(req.query.offset, 10) || 0 : 0;
 
-    const targets = await targetsService.listTargets({ status, tier, q, limit, offset });
+    const targets = await targetsService.listTargets({ status, tier, source, segment, q, limit, offset });
     res.json({ status: 'success', targets, limit, offset });
   } catch (err) {
     res.status(500).json({ error: 'Failed to list targets', message: err.message });
@@ -28,9 +30,11 @@ router.get('/export.csv', async (req, res) => {
   try {
     const status = req.query.status || undefined;
     const tier = req.query.tier || undefined;
+    const source = req.query.source || undefined;
+    const segment = req.query.segment || undefined;
     const q = req.query.q || undefined;
 
-    const csv = await targetsService.exportTargetsCsv({ status, tier, q });
+    const csv = await targetsService.exportTargetsCsv({ status, tier, source, segment, q });
 
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename="targets.csv"');

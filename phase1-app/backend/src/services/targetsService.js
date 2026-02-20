@@ -6,6 +6,7 @@ const scoringService = require('./scoringService');
 class TargetsService {
   async createTarget(input, actor) {
     const source = input.source || 'manual';
+    const segment = input.segment || null;
 
     const target = {
       company_name: input.company_name || input.companyName || null,
@@ -28,12 +29,12 @@ class TargetsService {
         company_name, domain, industry, naics, city, state, country,
         employee_count, annual_revenue,
         similarity_score, opportunity_score, tier, reason_codes,
-        source, status, notes, updated_by
+        source, status, notes, updated_by, segment
       ) VALUES (
         $1,$2,$3,$4,$5,$6,$7,
         $8,$9,
         $10,$11,$12,$13,
-        $14,$15,$16,$17
+        $14,$15,$16,$17,$18
       )
       RETURNING *`,
       [
@@ -54,6 +55,7 @@ class TargetsService {
         'pending_review',
         target.notes,
         actor || null,
+        segment,
       ]
     );
 
@@ -69,7 +71,7 @@ class TargetsService {
     return created;
   }
 
-  async listTargets({ status, q, tier, limit = 100, offset = 0 }) {
+  async listTargets({ status, q, tier, source, segment, limit = 100, offset = 0 }) {
     const params = [];
     const where = [];
 
@@ -81,6 +83,16 @@ class TargetsService {
     if (tier) {
       params.push(tier);
       where.push(`tier = $${params.length}`);
+    }
+
+    if (source) {
+      params.push(source);
+      where.push(`source = $${params.length}`);
+    }
+
+    if (segment) {
+      params.push(segment);
+      where.push(`segment = $${params.length}`);
     }
 
     if (q) {
@@ -123,6 +135,7 @@ class TargetsService {
       'similarity_score',
       'opportunity_score',
       'tier',
+      'segment',
       'reason_codes',
       'status',
       'notes',
@@ -193,8 +206,8 @@ class TargetsService {
     return updated;
   }
 
-  async exportTargetsCsv({ status, tier, q }) {
-    const rows = await this.listTargets({ status, tier, q, limit: 5000, offset: 0 });
+  async exportTargetsCsv({ status, tier, source, segment, q }) {
+    const rows = await this.listTargets({ status, tier, source, segment, q, limit: 5000, offset: 0 });
 
     const headers = [
       'target_id',
@@ -210,6 +223,7 @@ class TargetsService {
       'similarity_score',
       'opportunity_score',
       'tier',
+      'segment',
       'status',
       'reason_codes',
       'notes',
@@ -222,7 +236,17 @@ class TargetsService {
 
     const escape = (v) => {
       if (v === null || v === undefined) return '';
-      const s = Array.isArray(v) ? v.join('|') : String(v);
+
+      let s = Array.isArray(v) ? v.join('|') : String(v);
+
+      // Prevent CSV/Excel formula injection.
+      // See: https://owasp.org/www-community/attacks/CSV_Injection
+      const trimmed = s.trim();
+      const numeric = trimmed !== '' && Number.isFinite(Number(trimmed));
+      if (!numeric && /^[=+\-@]/.test(trimmed)) {
+        s = `'${s}`;
+      }
+
       // Basic CSV escaping
       if (/[\n\r",]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
       return s;

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
 export default function CEODashboard() {
   const [stats, setStats] = useState(null);
   const [top20Customers, setTop20Customers] = useState([]);
@@ -12,8 +14,8 @@ export default function CEODashboard() {
   const fetchData = async () => {
     try {
       const [statsRes, customersRes] = await Promise.all([
-        fetch('http://localhost:5000/api/analytics/stats'),
-        fetch('http://localhost:5000/api/analytics/top20?limit=10')
+        fetch(`${API_URL}/api/analytics/stats`),
+        fetch(`${API_URL}/api/analytics/top20?limit=10`)
       ]);
       
       if (statsRes.ok && customersRes.ok) {
