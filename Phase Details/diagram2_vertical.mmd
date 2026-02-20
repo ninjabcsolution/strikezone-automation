@@ -1,0 +1,54 @@
+graph TB
+    subgraph Phase1[Phase 1: Data Foundation]
+        ERP[ERP Data<br/>Dynamics 365 / Any ERP]
+        Upload[CSV Upload]
+        DB1[(PostgreSQL<br/>customers, orders)]
+    end
+    
+    subgraph Phase2[Phase 2: Intelligence Layer]
+        Top20[Top 20% Engine<br/>Margin-based ranking]
+        ICPExtract[ICP Extraction<br/>Industry, Geo, Size, Behavior]
+    end
+    
+    subgraph Phase3[Phase 3: Look-Alike Generation]
+        ToolChoice{Choose Tool}
+        SixSense[6sense API<br/>Intent + Behavior]
+        ZoomInfo[ZoomInfo API<br/>Firmographics + Scale]
+        DBLattice[D&B Lattice API<br/>Predictive Modeling]
+    end
+    
+    subgraph Phase4[Phase 4: Human-in-Loop]
+        ApprovalPortal[Approval Portal<br/>React Frontend]
+        Review{Review & Approve}
+    end
+    
+    subgraph Phase5[Phase 5: Enrichment & Activation]
+        ApolloEnrich[Apollo.io<br/>Contact Enrichment]
+        CRM[Export to CRM<br/>Salesforce / HubSpot]
+    end
+    
+    ERP --> Upload
+    Upload --> DB1
+    DB1 --> Top20
+    Top20 --> ICPExtract
+    ICPExtract --> ToolChoice
+    
+    ToolChoice --> SixSense
+    ToolChoice --> ZoomInfo
+    ToolChoice --> DBLattice
+    
+    SixSense --> ApprovalPortal
+    ZoomInfo --> ApprovalPortal
+    DBLattice --> ApprovalPortal
+    
+    ApprovalPortal --> Review
+    Review -->|Approved| ApolloEnrich
+    Review -->|Rejected| Reject[End]
+    
+    ApolloEnrich --> CRM
+    
+    style Phase1 fill:#e3f2fd
+    style Phase2 fill:#fff3e0
+    style Phase3 fill:#e8f5e9
+    style Phase4 fill:#fce4ec
+    style Phase5 fill:#f3e5f5
