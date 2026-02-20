@@ -1,0 +1,37 @@
+flowchart TD
+    Start([ERP Data: Top 20% Customers]) --> ICP[Step 1: ICP Extraction<br/>Strikezone Backend<br/>- Industries<br/>- Geography<br/>- Size ranges<br/>- Behavioral patterns]
+    
+    ICP --> ICPJson{ICP Profile<br/>JSON}
+    
+    ICPJson --> ToolAPI[Step 2: Look-Alike Generation<br/>Specialized Tool API<br/>🎯 6sense OR<br/>🔍 ZoomInfo OR<br/>📊 D&B Lattice]
+    
+    ToolAPI --> ToolResponse{Scored<br/>Account List}
+    
+    ToolResponse --> DB[Step 3: Store Targets<br/>lookalike_targets table<br/>- status: pending_review<br/>- similarity_score<br/>- reason_codes<br/>- source: tool name]
+    
+    DB --> Portal[Step 4: Approval Portal<br/>React Frontend<br/>👤 Human Review<br/>✅ Approve / ❌ Reject / ✏️ Edit]
+    
+    Portal --> Approved{Approved<br/>Accounts?}
+    
+    Approved -->|Yes| Apollo[Step 5: Contact Enrichment<br/>Apollo.io API<br/>- Find decision-makers<br/>- Job titles<br/>- Email + LinkedIn]
+    
+    Approved -->|No| Rejected[Rejected:<br/>Do not proceed]
+    
+    Apollo --> Enriched{Enriched<br/>Contacts}
+    
+    Enriched --> Export[Step 6: Ready for Outreach<br/>Export to CRM or<br/>Sales Engagement Platform]
+    
+    Export --> End([Outbound Campaign])
+    
+    style Start fill:#e1f5ff
+    style ICP fill:#fff3cd
+    style ToolAPI fill:#d4edda
+    style Portal fill:#f8d7da
+    style Apollo fill:#d1ecf1
+    style Export fill:#d4edda
+    style End fill:#e1f5ff
+    
+    style Approved fill:#fff3cd
+    style ICPJson fill:#e2e3e5
+    style ToolResponse fill:#e2e3e5
+    style Enriched fill:#e2e3e5
