@@ -1,5 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import toast, { Toaster } from 'react-hot-toast';
+import { 
+  HiMail, HiUserGroup, HiCheck, HiX, HiPencil, HiDownload, 
+  HiSparkles, HiClock, HiCheckCircle, HiXCircle, HiPencilAlt,
+  HiOutlineRefresh, HiEye, HiPlus
+} from 'react-icons/hi';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -12,8 +18,6 @@ export default function MessagingPortal() {
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
   // Generation form state
   const [selectedContacts, setSelectedContacts] = useState([]);
@@ -35,7 +39,7 @@ export default function MessagingPortal() {
       });
       setMessages(res.data.messages || []);
     } catch (err) {
-      setError('Failed to load messages');
+      toast.error('Failed to load messages');
     } finally {
       setLoading(false);
     }
@@ -83,12 +87,12 @@ export default function MessagingPortal() {
   const handleApprove = async (id) => {
     try {
       await axios.post(`${API_BASE}/messaging/messages/${id}/approve`);
-      setSuccess('Message approved!');
+      toast.success('Message approved!');
       setSelectedMessage(null);
       fetchMessages();
       fetchStats();
     } catch (err) {
-      setError('Failed to approve message');
+      toast.error('Failed to approve message');
     }
   };
 
@@ -97,13 +101,13 @@ export default function MessagingPortal() {
       await axios.post(`${API_BASE}/messaging/messages/${id}/reject`, {
         reason: rejectReason || 'Rejected by reviewer',
       });
-      setSuccess('Message rejected');
+      toast.success('Message rejected');
       setSelectedMessage(null);
       setRejectReason('');
       fetchMessages();
       fetchStats();
     } catch (err) {
-      setError('Failed to reject message');
+      toast.error('Failed to reject message');
     }
   };
 
@@ -113,14 +117,14 @@ export default function MessagingPortal() {
         body: editBody,
         subject: editSubject,
       });
-      setSuccess('Message edited and approved!');
+      toast.success('Message edited and approved!');
       setSelectedMessage(null);
       setEditBody('');
       setEditSubject('');
       fetchMessages();
       fetchStats();
     } catch (err) {
-      setError('Failed to edit message');
+      toast.error('Failed to edit message');
     }
   };
 
@@ -130,22 +134,21 @@ export default function MessagingPortal() {
     
     try {
       await axios.post(`${API_BASE}/messaging/messages/bulk/approve`, { ids: pendingIds });
-      setSuccess(`Approved ${pendingIds.length} messages`);
+      toast.success(`Approved ${pendingIds.length} messages`);
       fetchMessages();
       fetchStats();
     } catch (err) {
-      setError('Failed to bulk approve');
+      toast.error('Failed to bulk approve');
     }
   };
 
   const handleGenerate = async () => {
     if (!selectedContacts.length) {
-      setError('Please select at least one contact');
+      toast.error('Please select at least one contact');
       return;
     }
 
     setGenerating(true);
-    setError('');
     try {
       const res = await axios.post(`${API_BASE}/messaging/generate/batch`, {
         contactIds: selectedContacts,
@@ -153,12 +156,12 @@ export default function MessagingPortal() {
         messageType,
         customInstructions: customInstructions || undefined,
       });
-      setSuccess(`Generated ${res.data.generatedCount} messages (${res.data.failedCount} failed)`);
+      toast.success(`Generated ${res.data.generatedCount} messages (${res.data.failedCount} failed)`);
       setSelectedContacts([]);
       fetchMessages();
       fetchStats();
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to generate messages');
+      toast.error(err.response?.data?.error || 'Failed to generate messages');
     } finally {
       setGenerating(false);
     }
@@ -198,23 +201,13 @@ export default function MessagingPortal() {
 
   return (
     <div style={{ padding: '20px', fontFamily: 'system-ui, sans-serif', maxWidth: '1400px', margin: '0 auto' }}>
-      <h1 style={{ marginBottom: '10px' }}>📧 AI Messaging Portal</h1>
+      <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
+      <h1 style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <HiMail size={28} color="#2563eb" /> AI Messaging Portal
+      </h1>
       <p style={{ color: '#666', marginBottom: '20px' }}>
         Generate, review, and approve AI-powered outreach messages
       </p>
-
-      {error && (
-        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '10px', borderRadius: '6px', marginBottom: '15px', color: '#b91c1c' }}>
-          {error}
-          <button onClick={() => setError('')} style={{ float: 'right', background: 'none', border: 'none', cursor: 'pointer' }}>×</button>
-        </div>
-      )}
-      {success && (
-        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '10px', borderRadius: '6px', marginBottom: '15px', color: '#166534' }}>
-          {success}
-          <button onClick={() => setSuccess('')} style={{ float: 'right', background: 'none', border: 'none', cursor: 'pointer' }}>×</button>
-        </div>
-      )}
 
       {/* Stats Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '15px', marginBottom: '25px' }}>
@@ -240,7 +233,9 @@ export default function MessagingPortal() {
 
       {/* Generation Panel */}
       <div style={{ background: 'white', padding: '20px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '25px' }}>
-        <h2 style={{ fontSize: '18px', marginBottom: '15px' }}>🤖 Generate AI Messages</h2>
+        <h2 style={{ fontSize: '18px', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <HiSparkles size={20} color="#8b5cf6" /> Generate AI Messages
+        </h2>
         
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px', marginBottom: '15px' }}>
           <div>
@@ -334,9 +329,13 @@ export default function MessagingPortal() {
             border: 'none',
             cursor: generating || !selectedContacts.length ? 'not-allowed' : 'pointer',
             fontWeight: '500',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
           }}
         >
-          {generating ? '⏳ Generating...' : `🚀 Generate ${selectedContacts.length} Messages`}
+          {generating ? <HiOutlineRefresh size={18} className="animate-spin" /> : <HiSparkles size={18} />}
+          {generating ? 'Generating...' : `Generate ${selectedContacts.length} Messages`}
         </button>
       </div>
 
@@ -370,9 +369,12 @@ export default function MessagingPortal() {
               borderRadius: '6px',
               border: 'none',
               cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
             }}
           >
-            ✓ Approve All Pending
+            <HiCheckCircle size={16} /> Approve All Pending
           </button>
         )}
         <button
@@ -384,9 +386,12 @@ export default function MessagingPortal() {
             borderRadius: '6px',
             border: 'none',
             cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
           }}
         >
-          📥 Export Approved
+          <HiDownload size={16} /> Export Approved
         </button>
       </div>
 
@@ -543,9 +548,12 @@ export default function MessagingPortal() {
                       border: 'none',
                       cursor: 'pointer',
                       fontWeight: '500',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
                     }}
                   >
-                    ✓ Approve
+                    <HiCheckCircle size={18} /> Approve
                   </button>
                   <button
                     onClick={() => handleEditAndApprove(selectedMessage.id)}
@@ -557,9 +565,12 @@ export default function MessagingPortal() {
                       border: 'none',
                       cursor: 'pointer',
                       fontWeight: '500',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
                     }}
                   >
-                    ✏️ Save Edits & Approve
+                    <HiPencilAlt size={18} /> Save Edits & Approve
                   </button>
                   <button
                     onClick={() => handleReject(selectedMessage.id)}
@@ -571,9 +582,12 @@ export default function MessagingPortal() {
                       border: 'none',
                       cursor: 'pointer',
                       fontWeight: '500',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
                     }}
                   >
-                    ✗ Reject
+                    <HiXCircle size={18} /> Reject
                   </button>
                 </div>
               </>

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import toast, { Toaster } from 'react-hot-toast';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -100,7 +101,7 @@ export default function IcpDashboard() {
       const data = await res.json();
       if (!res.ok) throw new Error(data?.message || 'ICP calculate failed');
       await fetchAll();
-      alert(`ICP traits recalculated. Inserted: ${data.inserted}`);
+      toast.success(`ICP traits recalculated. Inserted: ${data.inserted}`);
     } catch (e) {
       setError(e.message);
       setLoading(false);
@@ -109,6 +110,7 @@ export default function IcpDashboard() {
 
   return (
     <div style={styles.page}>
+      <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
       <header style={styles.header}>
         <div>
           <h1 style={styles.title}>ICP Dashboard</h1>

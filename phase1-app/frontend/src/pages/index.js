@@ -1,24 +1,30 @@
 import { useState } from 'react';
+import Link from 'next/link';
+import toast, { Toaster } from 'react-hot-toast';
+import { 
+  HiUpload, HiChartBar, HiClipboardCheck, HiUserGroup, HiMail,
+  HiLightningBolt, HiQuestionMarkCircle, HiCheckCircle, HiXCircle,
+  HiDocumentText, HiOutlineRefresh
+} from 'react-icons/hi';
+import Loading from '../components/Loading';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 export default function Home() {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [calculating, setCalculating] = useState(false);
   const [result, setResult] = useState(null);
-  const [error, setError] = useState(null);
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
     setResult(null);
-    setError(null);
   };
 
   const handleUpload = async () => {
     if (!file) return;
 
     setUploading(true);
-    setError(null);
     
     const formData = new FormData();
     formData.append('file', file);
@@ -33,159 +39,198 @@ export default function Home() {
       
       if (response.ok) {
         setResult(data);
+        toast.success(`Successfully uploaded ${data.fileName}`);
       } else {
-        setError(data.error || 'Upload failed');
+        toast.error(data.error || 'Upload failed');
       }
     } catch (err) {
-      setError('Failed to connect to server');
+      toast.error('Failed to connect to server');
     } finally {
       setUploading(false);
     }
   };
 
   const handleCalculateMetrics = async () => {
+    setCalculating(true);
     try {
       const response = await fetch(`${API_URL}/api/analytics/calculate`, {
         method: 'POST',
       });
       const data = await response.json();
-      alert(`Metrics calculated!\nTop 20% Contribution: ${data.stats.top20Contribution}%`);
+      toast.success(`Top 20% customers contribute ${data.stats.top20Contribution}% of gross margin!`);
     } catch (err) {
-      alert('Failed to calculate metrics');
+      toast.error('Failed to calculate metrics');
+    } finally {
+      setCalculating(false);
     }
   };
 
   return (
-    <div style={{ maxWidth: '800px', margin: '50px auto', padding: '20px', fontFamily: 'Arial' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <div>
-          <h1 style={{ color: '#003366', margin: '0' }}>Strikezone ERP Data Ingestion</h1>
-          <p style={{ margin: '5px 0 0 0' }}>Upload CSV files from any ERP system</p>
+    <div style={{ maxWidth: '900px', margin: '30px auto', padding: '20px', fontFamily: 'system-ui, sans-serif' }}>
+      <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
+      
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <HiLightningBolt size={36} color="#f59e0b" />
+          <div>
+            <h1 style={{ color: '#1f2937', margin: '0', fontSize: '24px' }}>Strikezone Platform</h1>
+            <p style={{ margin: '3px 0 0 0', color: '#6b7280', fontSize: '14px' }}>ERP Data Ingestion & Analysis</p>
+          </div>
         </div>
-        <a 
-          href="/ceo-dashboard" 
-          style={{
-            padding: '12px 24px',
-            background: '#667eea',
-            color: 'white',
-            textDecoration: 'none',
-            borderRadius: '8px',
-            fontWeight: '600',
-            boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
-          }}
-        >
-          📊 CEO Dashboard
-        </a>
-
-        <a 
-          href="/approval-portal" 
-          style={{
-            marginLeft: '12px',
-            padding: '12px 24px',
-            background: '#2ECC71',
-            color: 'white',
-            textDecoration: 'none',
-            borderRadius: '8px',
-            fontWeight: '600',
-            boxShadow: '0 4px 12px rgba(46, 204, 113, 0.25)',
-          }}
-        >
-          ✅ Approval Portal
-        </a>
-
-        <a 
-          href="/icp-dashboard" 
-          style={{
-            marginLeft: '12px',
-            padding: '12px 24px',
-            background: '#F39C12',
-            color: 'white',
-            textDecoration: 'none',
-            borderRadius: '8px',
-            fontWeight: '600',
-            boxShadow: '0 4px 12px rgba(243, 156, 18, 0.25)',
-          }}
-        >
-          🧬 ICP Dashboard
-        </a>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <Link href="/guide">
+            <button style={{
+              padding: '10px 16px',
+              background: '#f3f4f6',
+              color: '#374151',
+              border: '1px solid #d1d5db',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontWeight: '500',
+            }}>
+              <HiQuestionMarkCircle size={18} /> Guide
+            </button>
+          </Link>
+          <Link href="/faq">
+            <button style={{
+              padding: '10px 16px',
+              background: '#2563eb',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontWeight: '500',
+            }}>
+              <HiQuestionMarkCircle size={18} /> FAQ
+            </button>
+          </Link>
+        </div>
       </div>
 
-      <div style={{ border: '2px dashed #ccc', padding: '40px', textAlign: 'center', marginTop: '20px', borderRadius: '8px' }}>
-        <input type="file" accept=".csv" onChange={handleFileChange} />
-        <br /><br />
-        <button 
-          onClick={handleUpload} 
-          disabled={!file || uploading}
-          style={{
-            padding: '12px 24px',
-            background: '#3498DB',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: file && !uploading ? 'pointer' : 'not-allowed',
-            fontSize: '16px'
-          }}
-        >
-          {uploading ? 'Uploading...' : 'Upload CSV'}
-        </button>
-      </div>
-
-      {error && (
-        <div style={{ marginTop: '20px', padding: '15px', background: '#ffebee', border: '1px solid #f44336', borderRadius: '4px' }}>
-          <strong style={{ color: '#f44336' }}>Error:</strong> {error}
-        </div>
-      )}
-
-      {result && (
-        <div style={{ marginTop: '20px', padding: '20px', background: '#e8f5e9', border: '1px solid #4caf50', borderRadius: '4px' }}>
-          <h3 style={{ color: '#4caf50', margin: '0 0 10px 0' }}>✓ Upload Successful!</h3>
-          <p><strong>File:</strong> {result.fileName}</p>
-          <p><strong>Type:</strong> {result.fileType}</p>
-          <p><strong>Rows Processed:</strong> {result.validation.totalRows}</p>
-          <p><strong>Rows Inserted:</strong> {result.ingestion.inserted}</p>
-          
-          {result.qaReport && Object.keys(result.qaReport.missingValues || {}).length > 0 && (
-            <div style={{ marginTop: '10px', padding: '10px', background: '#fff3cd', borderRadius: '4px' }}>
-              <strong>⚠️ Missing Values:</strong>
-              <ul>
-                {Object.entries(result.qaReport.missingValues).map(([field, data]) => (
-                  <li key={field}>{field}: {data.count} rows ({data.percentage}%)</li>
-                ))}
-              </ul>
+      {/* Navigation Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '25px' }}>
+        {[
+          { href: '/ceo-dashboard', icon: HiChartBar, label: 'CEO Dashboard', color: '#2563eb' },
+          { href: '/icp-dashboard', icon: HiUserGroup, label: 'ICP Dashboard', color: '#10b981' },
+          { href: '/approval-portal', icon: HiClipboardCheck, label: 'Approval Portal', color: '#f59e0b' },
+          { href: '/messaging-portal', icon: HiMail, label: 'Messaging', color: '#8b5cf6' },
+        ].map((nav) => (
+          <Link key={nav.href} href={nav.href} style={{ textDecoration: 'none' }}>
+            <div style={{
+              background: 'white',
+              padding: '15px',
+              borderRadius: '10px',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
+              borderTop: `3px solid ${nav.color}`,
+              textAlign: 'center',
+              cursor: 'pointer',
+              transition: 'transform 0.2s',
+            }}>
+              <nav.icon size={24} color={nav.color} />
+              <div style={{ marginTop: '8px', fontSize: '13px', fontWeight: '600', color: '#374151' }}>
+                {nav.label}
+              </div>
             </div>
-          )}
+          </Link>
+        ))}
+      </div>
+
+      {/* Upload Panel */}
+      <div style={{ background: 'white', borderRadius: '12px', padding: '30px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', marginBottom: '20px' }}>
+        <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+          <HiUpload size={22} color="#2563eb" /> Upload ERP Data
+        </h3>
+        <div style={{ border: '2px dashed #d1d5db', padding: '30px', textAlign: 'center', borderRadius: '8px', background: '#f9fafb' }}>
+          <HiDocumentText size={40} color="#9ca3af" style={{ marginBottom: '15px' }} />
+          <input type="file" accept=".csv" onChange={handleFileChange} style={{ marginBottom: '15px' }} />
+          <br />
+          <button 
+            onClick={handleUpload} 
+            disabled={!file || uploading}
+            style={{
+              padding: '12px 24px',
+              background: uploading ? '#9ca3af' : '#2563eb',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: file && !uploading ? 'pointer' : 'not-allowed',
+              fontSize: '14px',
+              fontWeight: '500',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+          >
+            {uploading ? <><HiOutlineRefresh size={16} /> Uploading...</> : <><HiUpload size={16} /> Upload CSV</>}
+          </button>
+        </div>
+      </div>
+
+      {/* Upload Result */}
+      {result && (
+        <div style={{ background: '#f0fdf4', padding: '20px', borderRadius: '12px', border: '1px solid #86efac', marginBottom: '20px' }}>
+          <h3 style={{ color: '#166534', margin: '0 0 15px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <HiCheckCircle size={22} /> Upload Successful
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px' }}>
+            <div><strong>File:</strong><br/>{result.fileName}</div>
+            <div><strong>Type:</strong><br/>{result.fileType}</div>
+            <div><strong>Rows Processed:</strong><br/>{result.validation?.totalRows || 0}</div>
+            <div><strong>Rows Inserted:</strong><br/>{result.ingestion?.inserted || 0}</div>
+          </div>
         </div>
       )}
 
-      <div style={{ marginTop: '30px', padding: '20px', background: '#f5f5f5', borderRadius: '4px' }}>
-        <h3>Analytics</h3>
+      {/* Analytics Panel */}
+      <div style={{ background: 'white', borderRadius: '12px', padding: '25px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', marginBottom: '20px' }}>
+        <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px' }}>
+          <HiChartBar size={22} color="#10b981" /> Analytics
+        </h3>
         <button 
           onClick={handleCalculateMetrics}
+          disabled={calculating}
           style={{
-            padding: '10px 20px',
-            background: '#27AE60',
+            padding: '12px 20px',
+            background: calculating ? '#9ca3af' : '#10b981',
             color: 'white',
             border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '14px'
+            borderRadius: '8px',
+            cursor: calculating ? 'not-allowed' : 'pointer',
+            fontSize: '14px',
+            fontWeight: '500',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
           }}
         >
-          Calculate Top 20% Metrics
+          {calculating ? <><HiOutlineRefresh size={16} /> Calculating...</> : 'Calculate Top 20% Metrics'}
         </button>
-        <p style={{ fontSize: '12px', color: '#666', marginTop: '10px' }}>
-          Run this after uploading Customers and Orders data
+        <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '10px' }}>
+          Run after uploading Customers and Orders data
         </p>
       </div>
 
-      <div style={{ marginTop: '30px', padding: '15px', background: '#e3f2fd', borderRadius: '4px' }}>
-        <h4>Supported Files:</h4>
-        <ul>
-          <li>Customers.csv</li>
-          <li>Orders.csv</li>
-          <li>OrderLines.csv</li>
-          <li>Products.csv</li>
-        </ul>
+      {/* Supported Files Info */}
+      <div style={{ background: '#eff6ff', borderRadius: '12px', padding: '20px', border: '1px solid #bfdbfe' }}>
+        <h4 style={{ margin: '0 0 10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <HiDocumentText size={18} color="#2563eb" /> Supported Files
+        </h4>
+        <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+          {['Customers.csv', 'Orders.csv', 'OrderLines.csv', 'Products.csv'].map(f => (
+            <span key={f} style={{ background: 'white', padding: '6px 12px', borderRadius: '6px', fontSize: '13px', fontWeight: '500' }}>{f}</span>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ marginTop: '25px', textAlign: 'center', color: '#9ca3af', fontSize: '12px' }}>
+        Strikezone Platform • BDaaS Solution
       </div>
     </div>
   );
