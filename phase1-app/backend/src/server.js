@@ -10,6 +10,7 @@ const powerbiRoutes = require('./routes/powerbi');
 const icpRoutes = require('./routes/icp');
 const winbackRoutes = require('./routes/winback');
 const enrichmentRoutes = require('./routes/enrichment');
+const messagingRoutes = require('./routes/messaging');
 const { pool } = require('./config/database');
 
 const app = express();
@@ -57,6 +58,7 @@ app.use('/api/powerbi', powerbiRoutes);
 app.use('/api/icp', icpRoutes);
 app.use('/api/winback', winbackRoutes);
 app.use('/api/enrichment', enrichmentRoutes);
+app.use('/api/messaging', messagingRoutes);
 
 app.get('/api/health', async (req, res) => {
   try {

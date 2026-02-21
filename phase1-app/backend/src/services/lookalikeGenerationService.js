@@ -85,11 +85,12 @@ class LookalikeGenerationService {
    */
   async getSeedCompanies() {
     const result = await pool.query(`
-      SELECT DISTINCT c.customer_id, c.company_name, c.industry, c.state, c.city, c.country,
-             cm.annual_revenue, cm.order_count as employee_count
+      SELECT c.customer_id, c.customer_name as company_name, c.industry, c.state, c.city, c.country,
+             c.annual_revenue, c.employee_count, cm.total_gross_margin
       FROM customers c
       LEFT JOIN customer_metrics cm ON c.customer_id = cm.customer_id
-      ORDER BY cm.annual_revenue DESC NULLS LAST
+      WHERE cm.is_top_20 = true OR cm.percentile_rank <= 20 OR cm.total_gross_margin IS NOT NULL
+      ORDER BY cm.total_gross_margin DESC NULLS LAST, c.annual_revenue DESC NULLS LAST
       LIMIT 20
     `);
     return result.rows;

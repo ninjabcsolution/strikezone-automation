@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import toast, { Toaster } from 'react-hot-toast';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -140,7 +141,7 @@ export default function ApprovalPortal() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.message || 'Failed to generate from Apollo');
-      alert(`Apollo generation complete. Inserted: ${data.inserted}, Updated: ${data.updated}, Fetched: ${data.totalFetched}`);
+      toast.success(`Apollo generation complete. Inserted: ${data.inserted}, Updated: ${data.updated}, Fetched: ${data.totalFetched}`);
       await fetchTargets();
     } catch (e) {
       setError(e.message);
@@ -163,7 +164,7 @@ export default function ApprovalPortal() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.message || 'Failed to generate win-back targets');
-      alert(`Win-back generation complete. Inserted: ${data.inserted}, Updated: ${data.updated}, Candidates: ${data.totalCandidates}`);
+      toast.success(`Win-back generation complete. Inserted: ${data.inserted}, Updated: ${data.updated}, Candidates: ${data.totalCandidates}`);
       await fetchTargets();
     } catch (e) {
       setError(e.message);
@@ -189,7 +190,7 @@ export default function ApprovalPortal() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.message || 'Failed to import Power BI targets');
-      alert(`Imported from Power BI. Inserted: ${data.inserted}, Updated: ${data.updated}, Failed: ${data.failed}`);
+      toast.success(`Imported from Power BI. Inserted: ${data.inserted}, Updated: ${data.updated}, Failed: ${data.failed}`);
       setPbiJsonText('');
       await fetchTargets();
     } catch (e) {
@@ -216,9 +217,7 @@ export default function ApprovalPortal() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.message || 'Failed to import Power BI CSV');
-      alert(
-        `Imported Power BI CSV. Rows: ${data.totalRows}. Inserted: ${data.inserted}, Updated: ${data.updated}, Failed: ${data.failed}`
-      );
+      toast.success(`Imported Power BI CSV. Rows: ${data.totalRows}. Inserted: ${data.inserted}, Updated: ${data.updated}, Failed: ${data.failed}`);
       setPbiCsvFile(null);
       setPbiFileInputKey((k) => k + 1);
       await fetchTargets();
@@ -274,6 +273,7 @@ export default function ApprovalPortal() {
 
   return (
     <div style={styles.page}>
+      <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
       <header style={styles.header}>
         <div>
           <h1 style={styles.title}>Target Approval Portal</h1>
