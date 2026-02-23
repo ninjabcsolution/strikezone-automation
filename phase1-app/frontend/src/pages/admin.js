@@ -7,7 +7,7 @@ import {
   HiUserGroup, HiCheck, HiX, HiBan, HiRefresh, HiHome,
   HiShieldCheck, HiClock, HiXCircle, HiUser
 } from 'react-icons/hi';
-import Logo from '../components/Logo';
+import Layout from '../components/Layout';
 import { useAuth } from '../context/AuthContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -96,35 +96,17 @@ export default function AdminPage() {
   const pendingCount = users.filter(u => u.status === 'pending').length;
 
   return (
-    <div style={{ padding: '30px', fontFamily: 'system-ui, sans-serif', maxWidth: '1200px', margin: '0 auto' }}>
-      <Toaster position="top-right" />
+    <Layout>
+      <div style={{ padding: '30px', fontFamily: 'system-ui, sans-serif', maxWidth: '1200px', margin: '0 auto' }}>
+        <Toaster position="top-right" />
 
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <Logo size={40} />
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
           <div>
             <h1 style={{ margin: 0, fontSize: '24px' }}>Admin Dashboard</h1>
             <p style={{ margin: '3px 0 0', color: '#6b7280', fontSize: '14px' }}>User Management</p>
           </div>
         </div>
-        <Link href="/">
-          <button style={{
-            padding: '10px 16px',
-            background: '#f3f4f6',
-            color: '#374151',
-            border: '1px solid #d1d5db',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            fontWeight: '500',
-          }}>
-            <HiHome size={18} /> Home
-          </button>
-        </Link>
-      </div>
 
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px', marginBottom: '25px' }}>
@@ -364,9 +346,10 @@ export default function AdminPage() {
         )}
       </div>
 
-      <div style={{ marginTop: '30px', textAlign: 'center', color: '#9ca3af', fontSize: '12px' }}>
-        Strikezone Admin Panel • Logged in as {user?.email}
+        <div style={{ marginTop: '30px', textAlign: 'center', color: '#9ca3af', fontSize: '12px' }}>
+          Strikezone Admin Panel • Logged in as {user?.email}
+        </div>
       </div>
-    </div>
+    </Layout>
   );
 }

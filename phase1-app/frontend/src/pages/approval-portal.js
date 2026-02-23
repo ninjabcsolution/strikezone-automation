@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
+import Layout from '../components/Layout';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -272,18 +273,15 @@ export default function ApprovalPortal() {
   };
 
   return (
-    <div style={styles.page}>
-      <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
-      <header style={styles.header}>
-        <div>
-          <h1 style={styles.title}>Target Approval Portal</h1>
-          <div style={styles.subtitle}>Phase 3 • Scoring + Review + Approvals + Export</div>
+    <Layout>
+      <div style={styles.page}>
+        <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
+        <div style={styles.header}>
+          <div>
+            <h1 style={styles.title}>Target Approval Portal</h1>
+            <div style={styles.subtitle}>Phase 3 • Scoring + Review + Approvals + Export</div>
+          </div>
         </div>
-        <div style={styles.nav}>
-          <a href="/" style={styles.navLink}>← Ingestion</a>
-          <a href="/ceo-dashboard" style={styles.navLink}>CEO Dashboard</a>
-        </div>
-      </header>
 
       <section style={styles.card}>
         <h2 style={styles.sectionTitle}>Session</h2>
@@ -562,7 +560,8 @@ export default function ApprovalPortal() {
         )}
       </section>
     </div>
-  );
+  </Layout>
+);
 }
 
 function TargetRow({ target, onUpdate, onApprove }) {

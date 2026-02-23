@@ -1,5 +1,5 @@
 const express = require('express');
-const pool = require('../config/database');
+const { pool } = require('../config/database');
 const apolloService = require('../services/apolloService');
 
 const router = express.Router();

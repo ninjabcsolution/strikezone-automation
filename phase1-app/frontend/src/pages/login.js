@@ -22,9 +22,14 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      await signin(email, password);
+      const userData = await signin(email, password);
       toast.success('Welcome back!');
-      router.push('/');
+      // Redirect admins to admin page, others to home
+      if (userData?.role === 'admin') {
+        router.push('/admin');
+      } else {
+        router.push('/');
+      }
     } catch (err) {
       toast.error(err.response?.data?.error || 'Login failed');
     } finally {

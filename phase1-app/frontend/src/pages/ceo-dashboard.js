@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { HiLightBulb, HiTarget, HiTrendingUp } from 'react-icons/hi';
+import Layout from '../components/Layout';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -48,15 +50,16 @@ export default function CEODashboard() {
   }
 
   return (
-    <div style={styles.container}>
-      {/* Header */}
-      <header style={styles.header}>
-        <div>
-          <h1 style={styles.title}>Strikezone Intelligence</h1>
-          <p style={styles.subtitle}>Data-Driven Customer Insights</p>
+    <Layout>
+      <div style={styles.container}>
+        {/* Page Header */}
+        <div style={styles.header}>
+          <div>
+            <h1 style={styles.title}>Strikezone Intelligence</h1>
+            <p style={styles.subtitle}>Data-Driven Customer Insights</p>
+          </div>
+          <button style={styles.refreshBtn} onClick={fetchData}>↻ Refresh</button>
         </div>
-        <button style={styles.refreshBtn} onClick={fetchData}>↻ Refresh</button>
-      </header>
 
       {/* Hero KPI - Top 20% Contribution */}
       <div style={styles.heroCard}>
@@ -147,7 +150,9 @@ export default function CEODashboard() {
       {/* Insights Section */}
       <div style={styles.insightsGrid}>
         <div style={styles.insightCard}>
-          <div style={styles.insightIcon}>💡</div>
+          <div style={styles.insightIconWrap}>
+            <HiLightBulb size={32} color="#f59e0b" />
+          </div>
           <h3 style={styles.insightTitle}>Key Insight</h3>
           <p style={styles.insightText}>
             Your top {stats?.top20Count} customers generate nearly {stats?.top20Contribution}% of profit. 
@@ -156,7 +161,9 @@ export default function CEODashboard() {
         </div>
         
         <div style={styles.insightCard}>
-          <div style={styles.insightIcon}>🎯</div>
+          <div style={styles.insightIconWrap}>
+            <HiTarget size={32} color="#10b981" />
+          </div>
           <h3 style={styles.insightTitle}>Next Steps</h3>
           <p style={styles.insightText}>
             Use ICP extraction to identify traits of your elite customers, then target 
@@ -165,7 +172,9 @@ export default function CEODashboard() {
         </div>
         
         <div style={styles.insightCard}>
-          <div style={styles.insightIcon}>📈</div>
+          <div style={styles.insightIconWrap}>
+            <HiTrendingUp size={32} color="#2563eb" />
+          </div>
           <h3 style={styles.insightTitle}>Growth Strategy</h3>
           <p style={styles.insightText}>
             Elite customers spend {((stats?.top20AvgMargin / stats?.othersAvgMargin) || 0).toFixed(1)}x more than average. 
@@ -174,11 +183,12 @@ export default function CEODashboard() {
         </div>
       </div>
 
-      {/* Footer */}
-      <footer style={styles.footer}>
-        <p>Strikezone Intelligence Platform • Real-time ERP Analytics</p>
-      </footer>
-    </div>
+        {/* Footer */}
+        <footer style={styles.footer}>
+          <p>Strikezone Intelligence Platform • Real-time ERP Analytics</p>
+        </footer>
+      </div>
+    </Layout>
   );
 }
 
@@ -390,8 +400,14 @@ const styles = {
     padding: '24px',
     boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
   },
-  insightIcon: {
-    fontSize: '40px',
+  insightIconWrap: {
+    width: '48px',
+    height: '48px',
+    borderRadius: '12px',
+    background: '#f3f4f6',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: '15px',
   },
   insightTitle: {
