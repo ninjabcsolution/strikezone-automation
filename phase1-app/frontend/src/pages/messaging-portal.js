@@ -6,6 +6,7 @@ import {
   HiSparkles, HiClock, HiCheckCircle, HiXCircle, HiPencilAlt,
   HiOutlineRefresh, HiEye, HiPlus
 } from 'react-icons/hi';
+import Layout from '../components/Layout';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -200,11 +201,12 @@ export default function MessagingPortal() {
   };
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'system-ui, sans-serif', maxWidth: '1400px', margin: '0 auto' }}>
-      <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
-      <h1 style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <HiMail size={28} color="#2563eb" /> AI Messaging Portal
-      </h1>
+    <Layout>
+      <div style={{ padding: '20px', fontFamily: 'system-ui, sans-serif', maxWidth: '1400px', margin: '0 auto' }}>
+        <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
+        <h1 style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <HiMail size={28} color="#2563eb" /> AI Messaging Portal
+        </h1>
       <p style={{ color: '#666', marginBottom: '20px' }}>
         Generate, review, and approve AI-powered outreach messages
       </p>
@@ -602,9 +604,10 @@ export default function MessagingPortal() {
         </div>
       )}
 
-      <div style={{ marginTop: '30px', textAlign: 'center', color: '#9ca3af', fontSize: '12px' }}>
-        Strikezone AI Messaging Portal • Phase 4B
+        <div style={{ marginTop: '30px', textAlign: 'center', color: '#9ca3af', fontSize: '12px' }}>
+          Strikezone AI Messaging Portal • Phase 4B
+        </div>
       </div>
-    </div>
+    </Layout>
   );
 }

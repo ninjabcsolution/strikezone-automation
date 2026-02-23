@@ -5,6 +5,7 @@ import {
   HiLightningBolt, HiDatabase, HiUserGroup, HiClipboardCheck,
   HiMail, HiCog, HiSupport
 } from 'react-icons/hi';
+import Layout from '../components/Layout';
 
 const faqCategories = [
   {
@@ -239,9 +240,10 @@ export default function FAQPage() {
     : faqCategories;
 
   return (
-    <div style={{ padding: '30px', fontFamily: 'system-ui, sans-serif', maxWidth: '900px', margin: '0 auto', background: '#f9fafb', minHeight: '100vh' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+    <Layout>
+      <div style={{ padding: '30px', fontFamily: 'system-ui, sans-serif', maxWidth: '900px', margin: '0 auto' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <HiQuestionMarkCircle size={36} color="#2563eb" />
           <div>
@@ -391,9 +393,10 @@ export default function FAQPage() {
         </div>
       </div>
 
-      <div style={{ marginTop: '30px', textAlign: 'center', color: '#9ca3af', fontSize: '12px' }}>
-        Strikezone Platform • BDaaS Solution
+        <div style={{ marginTop: '30px', textAlign: 'center', color: '#9ca3af', fontSize: '12px' }}>
+          Strikezone Platform • BDaaS Solution
+        </div>
       </div>
-    </div>
+    </Layout>
   );
 }

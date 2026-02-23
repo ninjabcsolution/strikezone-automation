@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
+import Layout from '../components/Layout';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -109,18 +110,15 @@ export default function IcpDashboard() {
   };
 
   return (
-    <div style={styles.page}>
-      <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
-      <header style={styles.header}>
-        <div>
-          <h1 style={styles.title}>ICP Dashboard</h1>
-          <div style={styles.subtitle}>Phase 2B • Trait extraction (Top20 vs Others) + export-ready filters</div>
+    <Layout>
+      <div style={styles.page}>
+        <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
+        <div style={styles.header}>
+          <div>
+            <h1 style={styles.title}>ICP Dashboard</h1>
+            <div style={styles.subtitle}>Phase 2B • Trait extraction (Top20 vs Others) + export-ready filters</div>
+          </div>
         </div>
-        <div style={styles.nav}>
-          <a href="/" style={styles.navLink}>← Ingestion</a>
-          <a href="/approval-portal" style={styles.navLink}>Approval Portal</a>
-        </div>
-      </header>
 
       <Section
         title="Session"
@@ -168,10 +166,11 @@ export default function IcpDashboard() {
       <Section title="Top NAICS">
         <TraitTable rows={summary?.naics || []} />
       </Section>
-      <Section title="Top Product Categories">
-        <TraitTable rows={summary?.productCategories || []} />
-      </Section>
-    </div>
+        <Section title="Top Product Categories">
+          <TraitTable rows={summary?.productCategories || []} />
+        </Section>
+      </div>
+    </Layout>
   );
 }
 

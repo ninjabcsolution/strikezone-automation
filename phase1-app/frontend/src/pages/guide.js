@@ -4,6 +4,7 @@ import {
   HiLightningBolt, HiArrowRight, HiCheckCircle, HiDatabase,
   HiSparkles, HiDocumentReport
 } from 'react-icons/hi';
+import Layout from '../components/Layout';
 
 const pages = [
   {
@@ -91,9 +92,10 @@ const workflowSteps = [
 
 export default function GuidePage() {
   return (
-    <div style={{ padding: '30px', fontFamily: 'system-ui, sans-serif', maxWidth: '1200px', margin: '0 auto', background: '#f9fafb', minHeight: '100vh' }}>
-      {/* Header */}
-      <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+    <Layout>
+      <div style={{ padding: '30px', fontFamily: 'system-ui, sans-serif', maxWidth: '1200px', margin: '0 auto' }}>
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
         <h1 style={{ fontSize: '32px', marginBottom: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
           <HiLightningBolt size={36} color="#f59e0b" />
           Strikezone Platform Guide
@@ -248,9 +250,10 @@ export default function GuidePage() {
         </Link>
       </div>
 
-      <div style={{ marginTop: '30px', textAlign: 'center', color: '#9ca3af', fontSize: '12px' }}>
-        Strikezone Platform • BDaaS Solution
+        <div style={{ marginTop: '30px', textAlign: 'center', color: '#9ca3af', fontSize: '12px' }}>
+          Strikezone Platform • BDaaS Solution
+        </div>
       </div>
-    </div>
+    </Layout>
   );
 }

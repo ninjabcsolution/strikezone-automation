@@ -14,7 +14,7 @@ require('dotenv').config();
 
 function printHelp() {
   // Keep this short so it's readable in CI / terminals
-  console.log(`\nStrikezone DB Init\n\nUsage:\n  node src/scripts/initDb.js [--all] [--phase2-only] [--phase3-only] [--phase4-only] [--help]\n\nOptions:\n  --all          Apply schema.sql (Phase 1) + phase2 + phase3 + phase4 schemas\n  --phase2-only  Apply phase2_schema.sql + phase3 + phase4 (non-destructive IF NOT EXISTS)\n  --phase3-only  Apply phase3_schema.sql + phase4 (non-destructive)\n  --phase4-only  Apply phase4_schema.sql only (non-destructive)\n  --help         Show this help\n`);
+  console.log(`\nStrikezone DB Init\n\nUsage:\n  node src/scripts/initDb.js [--all] [--phase2-only] [--phase3-only] [--phase4-only] [--auth-only] [--help]\n\nOptions:\n  --all          Apply schema.sql (Phase 1) + phase2 + phase3 + phase4 + auth schemas\n  --phase2-only  Apply phase2_schema.sql + phase3 + phase4 (non-destructive IF NOT EXISTS)\n  --phase3-only  Apply phase3_schema.sql + phase4 (non-destructive)\n  --phase4-only  Apply phase4_schema.sql only (non-destructive)\n  --auth-only    Apply auth_schema.sql only (users table + multi-tenancy)\n  --help         Show this help\n`);
 }
 
 async function applySqlFile(client, filePath) {
@@ -33,10 +33,11 @@ async function main() {
   const phase2Only = args.has('--phase2-only');
   const phase3Only = args.has('--phase3-only');
   const phase4Only = args.has('--phase4-only');
+  const authOnly = args.has('--auth-only');
 
-  const modeCount = [applyAll, phase2Only, phase3Only, phase4Only].filter(Boolean).length;
+  const modeCount = [applyAll, phase2Only, phase3Only, phase4Only, authOnly].filter(Boolean).length;
   if (modeCount > 1) {
-    console.error('❌ Please choose only one of: --all, --phase2-only, --phase3-only, --phase4-only');
+    console.error('❌ Please choose only one of: --all, --phase2-only, --phase3-only, --phase4-only, --auth-only');
     process.exitCode = 1;
     return;
   }
@@ -54,6 +55,7 @@ async function main() {
   const schemaV2Path = path.join(__dirname, '../models/phase2_schema.sql');
   const schemaV3Path = path.join(__dirname, '../models/phase3_schema.sql');
   const schemaV4Path = path.join(__dirname, '../models/phase4_schema.sql');
+  const authSchemaPath = path.join(__dirname, '../models/auth_schema.sql');
 
   const client = await pool.connect();
   try {
@@ -63,7 +65,7 @@ async function main() {
 
     await client.query('BEGIN');
 
-    if (!phase2Only && !phase3Only && !phase4Only) {
+    if (!phase2Only && !phase3Only && !phase4Only && !authOnly) {
       console.log('   • Applying Phase 1 schema.sql (DESTRUCTIVE: drops tables if they exist)');
       await applySqlFile(client, schemaV1Path);
     }
@@ -81,6 +83,11 @@ async function main() {
     if (applyAll || phase2Only || phase3Only || phase4Only) {
       console.log('   • Applying Phase 4 phase4_schema.sql (contact enrichment)');
       await applySqlFile(client, schemaV4Path);
+    }
+
+    if (applyAll || authOnly) {
+      console.log('   • Applying Auth auth_schema.sql (users + multi-tenancy)');
+      await applySqlFile(client, authSchemaPath);
     }
 
     await client.query('COMMIT');
