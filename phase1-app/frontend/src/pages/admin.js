@@ -9,8 +9,9 @@ import {
 } from 'react-icons/hi';
 import Layout from '../components/Layout';
 import { useAuth } from '../context/AuthContext';
+import { getApiUrl } from '../utils/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const getAPI_URL = () => typeof window !== 'undefined' ? getApiUrl() : 'http://localhost:5002';
 
 const statusColors = {
   pending: { bg: '#fef3c7', color: '#92400e', icon: HiClock },
@@ -39,7 +40,7 @@ export default function AdminPage() {
     setLoading(true);
     try {
       const params = statusFilter ? { status: statusFilter } : {};
-      const res = await axios.get(`${API_URL}/api/auth/users`, {
+      const res = await axios.get(`${getAPI_URL()}/api/auth/users`, {
         headers: { Authorization: `Bearer ${token}` },
         params,
       });
@@ -59,7 +60,7 @@ export default function AdminPage() {
 
   const handleAction = async (userId, action) => {
     try {
-      await axios.post(`${API_URL}/api/auth/users/${userId}/${action}`, {}, {
+      await axios.post(`${getAPI_URL()}/api/auth/users/${userId}/${action}`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success(`User ${action} successfully`);
@@ -71,7 +72,7 @@ export default function AdminPage() {
 
   const handleRoleChange = async (userId, newRole) => {
     try {
-      await axios.patch(`${API_URL}/api/auth/users/${userId}/role`, { role: newRole }, {
+      await axios.patch(`${getAPI_URL()}/api/auth/users/${userId}/role`, { role: newRole }, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success(`Role updated to ${newRole}`);

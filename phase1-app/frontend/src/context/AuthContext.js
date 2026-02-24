@@ -1,7 +1,9 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+import { getApiUrl } from '../utils/api';
+
+const getAPI_URL = () => getApiUrl();
 
 const AuthContext = createContext(null);
 
@@ -24,6 +26,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const signin = async (email, password) => {
+    const API_URL = getAPI_URL();
     const res = await axios.post(`${API_URL}/api/auth/signin`, { email, password });
     const { token: newToken, user: userData } = res.data;
     
@@ -37,6 +40,7 @@ export function AuthProvider({ children }) {
   };
 
   const signup = async (email, password, fullName, companyName) => {
+    const API_URL = getAPI_URL();
     const res = await axios.post(`${API_URL}/api/auth/signup`, {
       email,
       password,
@@ -55,11 +59,13 @@ export function AuthProvider({ children }) {
   };
 
   const forgotPassword = async (email) => {
+    const API_URL = getAPI_URL();
     const res = await axios.post(`${API_URL}/api/auth/forgot-password`, { email });
     return res.data;
   };
 
   const resetPassword = async (resetToken, password) => {
+    const API_URL = getAPI_URL();
     const res = await axios.post(`${API_URL}/api/auth/reset-password`, { token: resetToken, password });
     return res.data;
   };
@@ -67,6 +73,7 @@ export function AuthProvider({ children }) {
   const refreshUser = async () => {
     if (!token) return;
     try {
+      const API_URL = getAPI_URL();
       const res = await axios.get(`${API_URL}/api/auth/me`);
       setUser(res.data.user);
       localStorage.setItem('strikezone_user', JSON.stringify(res.data.user));

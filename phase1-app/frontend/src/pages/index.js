@@ -7,7 +7,7 @@ import {
 } from 'react-icons/hi';
 import Layout from '../components/Layout';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+import { getApiUrl } from '../utils/api';
 
 export default function Home() {
   const [file, setFile] = useState(null);
@@ -55,6 +55,7 @@ export default function Home() {
 
     try {
       const token = localStorage.getItem('strikezone_token');
+      const API_URL = getApiUrl();
       const response = await fetch(`${API_URL}/api/upload`, {
         method: 'POST',
         headers: token ? { 'Authorization': `Bearer ${token}` } : {},
@@ -84,6 +85,7 @@ export default function Home() {
     setCalculating(true);
     try {
       const token = localStorage.getItem('strikezone_token');
+      const API_URL = getApiUrl();
       const response = await fetch(`${API_URL}/api/analytics/calculate`, {
         method: 'POST',
         headers: token ? { 'Authorization': `Bearer ${token}` } : {},
