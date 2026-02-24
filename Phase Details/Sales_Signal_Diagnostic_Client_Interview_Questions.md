@@ -1,5 +1,4 @@
 # StrikeZone Sales Signal Diagnostic™ 
-## Client Interview Guide
 
 ---
 
@@ -94,11 +93,11 @@
 
 ## Part 1: Quick Overview (Say This First)
 
-*Give the client a brief summary before diving into questions:*
+*Give a brief summary before diving into questions:*
 
 ---
 
-"Here's the Sales Signal Diagnostic in a nutshell: Your client uploads 3 years of customer data from their ERP, and our system analyzes it to find their best customers, who's growing, who's stable, and what traits they have in common. Then we package everything into professional deliverables – an executive PDF, a slide deck, and data files they can use for targeting. Finally, you walk them through the insights in a readout session. After that, they can optionally expand into look-alike prospecting and outreach automation."
+"Here's the Sales Signal Diagnostic in a nutshell: User uploads 3 years of customer data from their ERP, and our system analyzes it to find their best customers, who's growing, who's stable, and what traits they have in common. Then we package everything into professional deliverables – an executive PDF, a slide deck, and data files they can use for targeting. Finally, you walk them through the insights in a readout session. After that, they can optionally expand into look-alike prospecting and outreach automation."
 
 ---
 
@@ -118,7 +117,7 @@
 
 ### Question 3: What should the PDF and Slide Deck look like?
 
-"For the Executive PDF and the 10-Slide Deck – do you have an example of a report or presentation style you love? Even from another tool or industry. What's the vibe you want? Clean and minimal? Data-heavy with lots of charts? Narrative with recommendations? And how should it be branded – your logo, the client's logo, or both?"
+"For the Executive PDF and the 10-Slide Deck – do you have an example of a report or presentation style you love? Even from another tool or industry. What's the vibe you want? Clean and minimal? Data-heavy with lots of charts? Narrative with recommendations?"
 
 ---
 
@@ -156,4 +155,3 @@ Document these decisions:
 
 ---
 
-*Keep the interview conversational and under 30 minutes.*
