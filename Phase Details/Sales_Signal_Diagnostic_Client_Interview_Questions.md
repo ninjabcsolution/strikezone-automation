@@ -37,21 +37,21 @@
 │                         ANALYTICS ENGINE (Step 3)                          │
 ├────────────────────────────────────────────────────────────────────────────┤
 │                                                                            │
-│   ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐        │
-│   │ Revenue Quality │   │  Growth Signal  │   │ Stability Score │        │
-│   │    Ranking      │   │     (CAGR)      │   │                 │        │
-│   │                 │   │                 │   │                 │        │
-│   │  Top 20% by     │   │ Year-over-year  │   │ Order frequency │        │
-│   │  gross margin   │   │ growth rate     │   │ & consistency   │        │
-│   └─────────────────┘   └─────────────────┘   └─────────────────┘        │
+│   ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐          │
+│   │ Revenue Quality │   │  Growth Signal  │   │ Stability Score │          │
+│   │    Ranking      │   │     (CAGR)      │   │                 │          │
+│   │                 │   │                 │   │                 │          │
+│   │  Top 20% by     │   │ Year-over-year  │   │ Order frequency │          │
+│   │  gross margin   │   │ growth rate     │   │ & consistency   │          │
+│   └─────────────────┘   └─────────────────┘   └─────────────────┘          │
 │                                                                            │
-│   ┌─────────────────┐   ┌─────────────────┐                               │
-│   │ Segment Ranking │   │ CIC Extraction  │                               │
-│   │                 │   │                 │                               │
-│   │  Tier A / B / C │   │ Industry, Size, │                               │
-│   │  classification │   │ Location, Buying│                               │
-│   │                 │   │ patterns        │                               │
-│   └─────────────────┘   └─────────────────┘                               │
+│   ┌─────────────────┐   ┌─────────────────┐                                │
+│   │ Segment Ranking │   │ CIC Extraction  │                                │
+│   │                 │   │                 │                                │
+│   │  Tier A / B / C │   │ Industry, Size, │                                │
+│   │  classification │   │ Location, Buying│                                │
+│   │                 │   │ patterns        │                                │
+│   └─────────────────┘   └─────────────────┘                                │
 │                                                                            │
 └────────────────────────────────────────────────────────────────────────────┘
              │
@@ -66,13 +66,13 @@
 │                       OUTPUT DELIVERABLES (Step 5)                         │
 ├────────────────────────────────────────────────────────────────────────────┤
 │                                                                            │
-│   ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │
-│   │  Executive  │  │  10-Slide   │  │    CIC      │  │  HVT-Ready  │     │
-│   │  PDF Summary│  │ Insight Deck│  │  Targeting  │  │  Data File  │     │
-│   │             │  │             │  │    Brief    │  │             │     │
-│   │  1-page for │  │ Presentation│  │ Sales cheat │  │ CSV/Excel   │     │
-│   │  the CEO    │  │  ready      │  │   sheet     │  │ for CRM     │     │
-│   └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘     │
+│   ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐       │
+│   │  Executive  │  │  10-Slide   │  │    CIC      │  │  HVT-Ready  │       │
+│   │  PDF Summary│  │ Insight Deck│  │  Targeting  │  │  Data File  │       │
+│   │             │  │             │  │    Brief    │  │             │       │
+│   │  1-page for │  │ Presentation│  │ Sales cheat │  │ CSV/Excel   │       │
+│   │  the CEO    │  │  ready      │  │   sheet     │  │ for CRM     │       │
+│   └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘       │
 │                                                                            │
 └────────────────────────────────────────────────────────────────────────────┘
              │
@@ -85,7 +85,7 @@
              │
              ▼
     ┌──────────────────────────────────────────────────────────────────────┐
-    │              OPTIONAL EXPANSION PATH                                  │
+    │              OPTIONAL EXPANSION PATH                                 │
     │  CIC → HVT → Look-alikes → Contact Enrichment → Outreach Execution   │
     └──────────────────────────────────────────────────────────────────────┘
 ```
