@@ -36,7 +36,7 @@ cp .env.example .env
 # Edit .env with your database credentials
 npm run db:init:all
 npm run dev
-# Backend runs on http://localhost:5000
+# Backend runs on http://localhost:5002
 ```
 
 ### 3. Setup Frontend
@@ -45,33 +45,33 @@ npm run dev
 cd frontend
 npm install
 npm run dev
-# Frontend runs on http://localhost:3000
+# Frontend runs on http://localhost:5000
 ```
 
 ## Usage
 
 ### Upload Data
-1. Go to http://localhost:3000
+1. Go to http://localhost:5000
 2. Drag & drop CSV files (Customers, Orders, OrderLines, Products)
 3. View validation results and QA reports
 
 ### Run Analytics
 ```bash
 # Calculate Top 20% customers
-curl -X POST http://localhost:5000/api/analytics/calculate
+curl -X POST http://localhost:5002/api/analytics/calculate
 
 # Get Top 20% list
-curl http://localhost:5000/api/analytics/top20
+curl http://localhost:5002/api/analytics/top20
 
 # Get stats
-curl http://localhost:5000/api/analytics/stats
+curl http://localhost:5002/api/analytics/stats
 ```
 
 ### UI Pages
-- Ingestion / Upload: `http://localhost:3000/`
-- CEO Dashboard: `http://localhost:3000/ceo-dashboard`
-- Approval Portal: `http://localhost:3000/approval-portal`
-- ICP Dashboard (Phase 2B): `http://localhost:3000/icp-dashboard`
+- Ingestion / Upload: `http://localhost:5000/`
+- CEO Dashboard: `http://localhost:5000/ceo-dashboard`
+- Approval Portal: `http://localhost:5000/approval-portal`
+- ICP Dashboard (Phase 2B): `http://localhost:5000/icp-dashboard`
 
 ## Project Structure
 
@@ -148,10 +148,10 @@ phase1-app/
 
 ```bash
 # Test with provided sample data
-curl -X POST http://localhost:5000/api/upload \
+curl -X POST http://localhost:5002/api/upload \
   -F "file=@../sample_data_ceo/Customers.csv"
 
-curl -X POST http://localhost:5000/api/upload \
+curl -X POST http://localhost:5002/api/upload \
   -F "file=@../sample_data_ceo/Orders.csv"
 ```
 

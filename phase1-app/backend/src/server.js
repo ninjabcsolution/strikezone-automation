@@ -15,19 +15,19 @@ const authRoutes = require('./routes/auth');
 const { pool } = require('./config/database');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5002;
 
 app.disable('x-powered-by');
 
 const DEFAULT_CORS_ORIGINS = [
+  'http://localhost:5000',
+  'http://localhost:5001',
   'http://localhost:3000',
   'http://localhost:3001',
-  'http://localhost:3002',
-  'http://localhost:3003',
+  'http://127.0.0.1:5000',
+  'http://127.0.0.1:5001',
   'http://127.0.0.1:3000',
   'http://127.0.0.1:3001',
-  'http://127.0.0.1:3002',
-  'http://127.0.0.1:3003',
 ];
 
 const envCors = (process.env.CORS_ORIGINS || '')
@@ -79,7 +79,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong!', message: err.message });
 });
 
-app.listen(PORT, () => {
-  console.log(`✓ Server running on port ${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✓ Server running on port ${PORT} (all interfaces)`);
   console.log(`✓ Health check: http://localhost:${PORT}/api/health`);
 });

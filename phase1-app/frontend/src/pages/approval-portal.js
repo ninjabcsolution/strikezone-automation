@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import Layout from '../components/Layout';
+import { getApiUrl } from '../utils/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const getAPI_URL = () => typeof window !== 'undefined' ? getApiUrl() : 'http://localhost:5002';
 
 function formatCurrency(value) {
   if (value === null || value === undefined || value === '') return '—';
@@ -66,7 +67,7 @@ export default function ApprovalPortal() {
     if (sourceFilter) params.set('source', sourceFilter);
     if (segmentFilter) params.set('segment', segmentFilter);
     if (query) params.set('q', query);
-    return `${API_URL}/api/targets/export.csv?${params.toString()}`;
+    return `${getAPI_URL()}/api/targets/export.csv?${params.toString()}`;
   }, [statusFilter, tierFilter, sourceFilter, segmentFilter, query]);
 
   const fetchTargets = async () => {
@@ -82,7 +83,7 @@ export default function ApprovalPortal() {
       if (segmentFilter) params.set('segment', segmentFilter);
       if (query) params.set('q', query);
 
-      const res = await fetch(`${API_URL}/api/targets?${params.toString()}`);
+      const res = await fetch(`${getAPI_URL()}/api/targets?${params.toString()}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data?.message || 'Failed to fetch targets');
       setTargets(data.targets || []);
@@ -100,7 +101,7 @@ export default function ApprovalPortal() {
 
   const updateTarget = async (targetId, patch) => {
     setError(null);
-    const res = await fetch(`${API_URL}/api/targets/${targetId}`, {
+    const res = await fetch(`${getAPI_URL()}/api/targets/${targetId}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -115,7 +116,7 @@ export default function ApprovalPortal() {
 
   const approveTarget = async (targetId, action) => {
     setError(null);
-    const res = await fetch(`${API_URL}/api/targets/${targetId}/approve`, {
+    const res = await fetch(`${getAPI_URL()}/api/targets/${targetId}/approve`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -132,7 +133,7 @@ export default function ApprovalPortal() {
     setApolloLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_URL}/api/lookalike/generate`, {
+      const res = await fetch(`${getAPI_URL()}/api/lookalike/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -155,7 +156,7 @@ export default function ApprovalPortal() {
     setWinbackLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_URL}/api/winback/generate`, {
+      const res = await fetch(`${getAPI_URL()}/api/winback/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -181,7 +182,7 @@ export default function ApprovalPortal() {
       const records = JSON.parse(pbiJsonText || '[]');
       if (!Array.isArray(records)) throw new Error('Power BI JSON must be an array of records');
 
-      const res = await fetch(`${API_URL}/api/powerbi/import/targets`, {
+      const res = await fetch(`${getAPI_URL()}/api/powerbi/import/targets`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -209,7 +210,7 @@ export default function ApprovalPortal() {
       const formData = new FormData();
       formData.append('file', pbiCsvFile);
 
-      const res = await fetch(`${API_URL}/api/powerbi/import/targets-csv`, {
+      const res = await fetch(`${getAPI_URL()}/api/powerbi/import/targets-csv`, {
         method: 'POST',
         headers: {
           'X-Actor': actor,
@@ -244,7 +245,7 @@ export default function ApprovalPortal() {
         source: 'manual',
       };
 
-      const res = await fetch(`${API_URL}/api/targets`, {
+      const res = await fetch(`${getAPI_URL()}/api/targets`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

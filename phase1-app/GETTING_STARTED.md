@@ -39,21 +39,21 @@ npm run db:init:all
 cd backend
 npm run dev
 ```
-✓ Backend runs on http://localhost:5000
+✓ Backend runs on http://localhost:5002
 
 ### 3️⃣ Start Frontend (New Terminal)
 ```bash
 cd frontend
 npm run dev
 ```
-✓ Frontend runs on http://localhost:3000
+✓ Frontend runs on http://localhost:5000
 
 ## 🎯 Usage Workflow
 
 > This follows the **original workflow**: **Dynamics/ERP → Power BI → Segmented Export → Approval Portal → Outreach**.
 
 ### Step 1: Upload Data
-1. Go to http://localhost:3000
+1. Go to http://localhost:5000
 2. Upload CSV files in this order:
    - Customers.csv
    - Products.csv
@@ -79,7 +79,7 @@ npm run dev
 - Export approved targets as CSV
 
 ### (Phase 2B) ICP Dashboard
-- Open: http://localhost:3000/icp-dashboard
+- Open: http://localhost:5000/icp-dashboard
 - Click **Recalculate ICP Traits** after analytics calculation
 - Export:
   - Traits CSV (for review / sharing)
@@ -138,20 +138,20 @@ Giant number, impossible to miss!
 cd phase1-app
 
 # Upload sample data
-curl -X POST http://localhost:5000/api/upload \
+curl -X POST http://localhost:5002/api/upload \
   -F "file=@../sample_data_ceo/Customers.csv"
 
-curl -X POST http://localhost:5000/api/upload \
+curl -X POST http://localhost:5002/api/upload \
   -F "file=@../sample_data_ceo/Orders.csv"
 
 # Calculate metrics
-curl -X POST http://localhost:5000/api/analytics/calculate
+curl -X POST http://localhost:5002/api/analytics/calculate
 
 # View results
-open http://localhost:3000/ceo-dashboard
+open http://localhost:5000/ceo-dashboard
 
 # Phase 3 approval portal
-open http://localhost:3000/approval-portal
+open http://localhost:5000/approval-portal
 ```
 
 ## 🎯 Demo Script for CEO
@@ -190,13 +190,13 @@ cat backend/.env
 psql -h localhost -U strikezone_user -d strikezone_db -c "SELECT COUNT(*) FROM customers;"
 
 # Recalculate metrics
-curl -X POST http://localhost:5000/api/analytics/calculate
+curl -X POST http://localhost:5002/api/analytics/calculate
 ```
 
 ### Frontend errors
 ```bash
 # Check backend is running
-curl http://localhost:5000/api/health
+curl http://localhost:5002/api/health
 
 # Restart frontend
 cd frontend

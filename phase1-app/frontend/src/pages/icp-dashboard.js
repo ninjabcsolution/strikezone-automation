@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import Layout from '../components/Layout';
+import { getApiUrl } from '../utils/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const getAPI_URL = () => typeof window !== 'undefined' ? getApiUrl() : 'http://localhost:5002';
 
 function Section({ title, children, right }) {
   return (
@@ -60,16 +61,16 @@ export default function IcpDashboard() {
   const [summary, setSummary] = useState(null);
   const [filters, setFilters] = useState(null);
 
-  const exportCsvUrl = useMemo(() => `${API_URL}/api/icp/export.csv`, []);
-  const exportMdUrl = useMemo(() => `${API_URL}/api/icp/export.md`, []);
+  const exportCsvUrl = useMemo(() => `${getAPI_URL()}/api/icp/export.csv`, []);
+  const exportMdUrl = useMemo(() => `${getAPI_URL()}/api/icp/export.md`, []);
 
   const fetchAll = async () => {
     setLoading(true);
     setError(null);
     try {
       const [sRes, fRes] = await Promise.all([
-        fetch(`${API_URL}/api/icp/summary`),
-        fetch(`${API_URL}/api/icp/external-filters`),
+        fetch(`${getAPI_URL()}/api/icp/summary`),
+        fetch(`${getAPI_URL()}/api/icp/external-filters`),
       ]);
       const sData = await sRes.json();
       const fData = await fRes.json();
@@ -95,7 +96,7 @@ export default function IcpDashboard() {
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/icp/calculate`, {
+      const res = await fetch(`${getAPI_URL()}/api/icp/calculate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Actor': actor },
       });

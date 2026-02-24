@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { HiLightBulb, HiTarget, HiTrendingUp } from 'react-icons/hi';
 import Layout from '../components/Layout';
+import { getApiUrl } from '../utils/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const getAPI_URL = () => typeof window !== 'undefined' ? getApiUrl() : 'http://localhost:5002';
 
 export default function CEODashboard() {
   const [stats, setStats] = useState(null);
@@ -15,6 +16,7 @@ export default function CEODashboard() {
 
   const fetchData = async () => {
     try {
+      const API_URL = getAPI_URL();
       const [statsRes, customersRes] = await Promise.all([
         fetch(`${API_URL}/api/analytics/stats`),
         fetch(`${API_URL}/api/analytics/top20?limit=10`)

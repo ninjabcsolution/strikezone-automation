@@ -8,7 +8,9 @@ import {
 } from 'react-icons/hi';
 import Layout from '../components/Layout';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+import { getApiUrl } from '../utils/api';
+
+const getAPI_BASE = () => `${typeof window !== 'undefined' ? getApiUrl() : 'http://localhost:5002'}/api`;
 
 export default function MessagingPortal() {
   const [activeTab, setActiveTab] = useState('pending');
@@ -35,7 +37,7 @@ export default function MessagingPortal() {
     try {
       setLoading(true);
       const status = activeTab === 'all' ? '' : activeTab;
-      const res = await axios.get(`${API_BASE}/messaging/messages`, {
+      const res = await axios.get(`${getAPI_BASE()}/messaging/messages`, {
         params: { status: status || undefined, limit: 100 },
       });
       setMessages(res.data.messages || []);
@@ -48,7 +50,7 @@ export default function MessagingPortal() {
 
   const fetchStats = async () => {
     try {
-      const res = await axios.get(`${API_BASE}/messaging/messages/stats`);
+      const res = await axios.get(`${getAPI_BASE()}/messaging/messages/stats`);
       setStats(res.data.stats || {});
     } catch (err) {
       console.error('Failed to load stats');
@@ -57,7 +59,7 @@ export default function MessagingPortal() {
 
   const fetchTemplates = async () => {
     try {
-      const res = await axios.get(`${API_BASE}/messaging/templates`);
+      const res = await axios.get(`${getAPI_BASE()}/messaging/templates`);
       setTemplates(res.data.templates || []);
     } catch (err) {
       console.error('Failed to load templates');
@@ -66,7 +68,7 @@ export default function MessagingPortal() {
 
   const fetchContacts = async () => {
     try {
-      const res = await axios.get(`${API_BASE}/enrichment/contacts`, {
+      const res = await axios.get(`${getAPI_BASE()}/enrichment/contacts`, {
         params: { limit: 200 },
       });
       setContacts(res.data.contacts || []);
@@ -87,7 +89,7 @@ export default function MessagingPortal() {
 
   const handleApprove = async (id) => {
     try {
-      await axios.post(`${API_BASE}/messaging/messages/${id}/approve`);
+      await axios.post(`${getAPI_BASE()}/messaging/messages/${id}/approve`);
       toast.success('Message approved!');
       setSelectedMessage(null);
       fetchMessages();
@@ -99,7 +101,7 @@ export default function MessagingPortal() {
 
   const handleReject = async (id) => {
     try {
-      await axios.post(`${API_BASE}/messaging/messages/${id}/reject`, {
+      await axios.post(`${getAPI_BASE()}/messaging/messages/${id}/reject`, {
         reason: rejectReason || 'Rejected by reviewer',
       });
       toast.success('Message rejected');
@@ -114,7 +116,7 @@ export default function MessagingPortal() {
 
   const handleEditAndApprove = async (id) => {
     try {
-      await axios.post(`${API_BASE}/messaging/messages/${id}/edit`, {
+      await axios.post(`${getAPI_BASE()}/messaging/messages/${id}/edit`, {
         body: editBody,
         subject: editSubject,
       });
@@ -134,7 +136,7 @@ export default function MessagingPortal() {
     if (!pendingIds.length) return;
     
     try {
-      await axios.post(`${API_BASE}/messaging/messages/bulk/approve`, { ids: pendingIds });
+      await axios.post(`${getAPI_BASE()}/messaging/messages/bulk/approve`, { ids: pendingIds });
       toast.success(`Approved ${pendingIds.length} messages`);
       fetchMessages();
       fetchStats();
@@ -151,7 +153,7 @@ export default function MessagingPortal() {
 
     setGenerating(true);
     try {
-      const res = await axios.post(`${API_BASE}/messaging/generate/batch`, {
+      const res = await axios.post(`${getAPI_BASE()}/messaging/generate/batch`, {
         contactIds: selectedContacts,
         templateId: selectedTemplate || undefined,
         messageType,
@@ -169,7 +171,7 @@ export default function MessagingPortal() {
   };
 
   const handleExport = async () => {
-    window.open(`${API_BASE}/messaging/export?type=${messageType}`, '_blank');
+    window.open(`${getAPI_BASE()}/messaging/export?type=${messageType}`, '_blank');
   };
 
   const openMessageDetail = (msg) => {
