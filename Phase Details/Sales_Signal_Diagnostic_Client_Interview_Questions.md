@@ -92,48 +92,13 @@
 
 ---
 
-## Part 1: Feature Walkthrough (Explain This First)
+## Part 1: Quick Overview (Say This First)
 
-*Read this to the client to set context before asking questions:*
+*Give the client a brief summary before diving into questions:*
 
 ---
 
-"Let me walk you through how the Sales Signal Diagnostic works, step by step.
-
-**Step 1: Data Upload**
-First, your client exports their customer data from their ERP system – things like customer names, order history, revenue, and margins over the past 3 years. They upload it as a simple CSV file into our platform.
-
-**Step 2: Data Validation**
-The system automatically checks the data quality. It looks for missing fields, bad dates, duplicates – anything that could cause problems. If there are issues, we flag them so they can be fixed before we run the analysis.
-
-**Step 3: The Analytics Engine**
-Here's where the magic happens. The system analyzes every customer and calculates several key metrics:
-- **Revenue Quality Ranking** – Who are your most profitable customers? We identify the Top 20% that generate the most value.
-- **Growth Signal (CAGR)** – Which customers are growing year over year, and which ones are declining? This helps you spot opportunity and risk.
-- **Stability Score** – How consistent are they? Do they order regularly, or are they unpredictable? Stable customers are lower risk.
-- **Segment Ranking** – We group customers into tiers: A, B, and C, based on their overall value.
-- **CIC Extraction** – CIC stands for Customer ICP Characteristics. It's basically 'what do your best customers have in common?' – industry, size, location, buying patterns.
-
-**Step 4: Insight Generation**
-From that analysis, we generate insights like:
-- Here are your High-Value Accounts
-- Here are your Growth Segments – customers that are trending up
-- Here are your Target Priorities – where should sales focus next?
-
-**Step 5: Output Deliverables**
-Then we package everything into professional deliverables:
-- **Executive PDF Summary** – A one-page snapshot for the CEO
-- **10-Slide Insight Deck** – A presentation-ready slide deck
-- **CIC Targeting Brief** – A cheat sheet for sales to find look-alike prospects
-- **HVT-Ready Data File** – A clean export of High Value Targets, ready to load into a CRM or outbound tool
-
-**Step 6: Human Interpretation**
-Finally, you or your team sit down with the client to walk through the findings. This is the 'Executive Readout' – explaining what the data means and aligning the sales team on priorities.
-
-**Optional Next Steps**
-After the diagnostic, if the client wants to take action, we can feed those insights into look-alike prospecting, contact enrichment, and automated outreach – but that's an expansion, not part of the core diagnostic.
-
-Does that make sense so far? Great – now I have a few questions to make sure we build this exactly how you need it."
+"Here's the Sales Signal Diagnostic in a nutshell: Your client uploads 3 years of customer data from their ERP, and our system analyzes it to find their best customers, who's growing, who's stable, and what traits they have in common. Then we package everything into professional deliverables – an executive PDF, a slide deck, and data files they can use for targeting. Finally, you walk them through the insights in a readout session. After that, they can optionally expand into look-alike prospecting and outreach automation."
 
 ---
 
