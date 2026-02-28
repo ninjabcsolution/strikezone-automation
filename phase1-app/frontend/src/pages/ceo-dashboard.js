@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { HiLightBulb, HiTarget, HiTrendingUp } from 'react-icons/hi';
+import { HiLightBulb, HiTarget, HiTrendingUp, HiChartBar, HiSwitchHorizontal } from 'react-icons/hi';
 import Layout from '../components/Layout';
 import { getApiUrl } from '../utils/api';
 
@@ -8,30 +8,65 @@ const getAPI_URL = () => typeof window !== 'undefined' ? getApiUrl() : 'http://l
 export default function CEODashboard() {
   const [stats, setStats] = useState(null);
   const [top20Customers, setTop20Customers] = useState([]);
+  const [comparison, setComparison] = useState(null);
+  const [cagrAnalysis, setCagrAnalysis] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [rankBy, setRankBy] = useState('margin');
+  const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    if (comparison) {
+      fetchComparison();
+    }
+  }, [rankBy]);
+
   const fetchData = async () => {
     try {
       const API_URL = getAPI_URL();
-      const [statsRes, customersRes] = await Promise.all([
+      const [statsRes, customersRes, comparisonRes, cagrRes] = await Promise.all([
         fetch(`${API_URL}/api/analytics/stats`),
-        fetch(`${API_URL}/api/analytics/top20?limit=10`)
+        fetch(`${API_URL}/api/analytics/top20?limit=10`),
+        fetch(`${API_URL}/api/analytics/top20-comparison?rankBy=${rankBy}`),
+        fetch(`${API_URL}/api/analytics/cagr-analysis?limit=50`)
       ]);
       
-      if (statsRes.ok && customersRes.ok) {
+      if (statsRes.ok) {
         const statsData = await statsRes.json();
-        const customersData = await customersRes.json();
         setStats(statsData.stats);
+      }
+      if (customersRes.ok) {
+        const customersData = await customersRes.json();
         setTop20Customers(customersData.customers);
+      }
+      if (comparisonRes.ok) {
+        const compData = await comparisonRes.json();
+        setComparison(compData);
+      }
+      if (cagrRes.ok) {
+        const cagrData = await cagrRes.json();
+        setCagrAnalysis(cagrData);
       }
     } catch (error) {
       console.error('Failed to fetch data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchComparison = async () => {
+    try {
+      const API_URL = getAPI_URL();
+      const res = await fetch(`${API_URL}/api/analytics/top20-comparison?rankBy=${rankBy}`);
+      if (res.ok) {
+        const data = await res.json();
+        setComparison(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch comparison:', error);
     }
   };
 
@@ -148,6 +183,142 @@ export default function CEODashboard() {
           </table>
         </div>
       </div>
+
+      {/* Top 20% vs 80% Comparison Section */}
+      {comparison && (
+        <div style={styles.comparisonCard}>
+          <div style={styles.comparisonHeader}>
+            <h2 style={styles.comparisonTitle}>📊 Top 20% vs 80% Comparison</h2>
+            <div style={styles.toggleContainer}>
+              <span style={styles.toggleLabel}>Rank by:</span>
+              <button 
+                style={rankBy === 'margin' ? styles.toggleBtnActive : styles.toggleBtn}
+                onClick={() => setRankBy('margin')}
+              >
+                Margin
+              </button>
+              <button 
+                style={rankBy === 'cagr' ? styles.toggleBtnActive : styles.toggleBtn}
+                onClick={() => setRankBy('cagr')}
+              >
+                3-Year CAGR
+              </button>
+            </div>
+          </div>
+          
+          {/* Side by Side Metrics */}
+          <div style={styles.comparisonGrid}>
+            <div style={styles.comparisonGroup}>
+              <div style={styles.groupLabel}>🏆 TOP 20%</div>
+              <div style={styles.metricRow}>
+                <span>Customers:</span>
+                <strong>{comparison.top20?.count || 0}</strong>
+              </div>
+              <div style={styles.metricRow}>
+                <span>Avg Order Value:</span>
+                <strong>{formatCurrency(comparison.top20?.avgOrderValue)}</strong>
+              </div>
+              <div style={styles.metricRow}>
+                <span>Avg Margin:</span>
+                <strong>{formatCurrency(comparison.top20?.avgMargin)}</strong>
+              </div>
+              <div style={styles.metricRow}>
+                <span>Avg Order Frequency:</span>
+                <strong>{(comparison.top20?.avgOrderFrequency || 0).toFixed(2)}/mo</strong>
+              </div>
+              <div style={styles.metricRow}>
+                <span>Avg CAGR:</span>
+                <strong style={{color: '#27AE60'}}>{((comparison.top20?.avgCagr || 0) * 100).toFixed(1)}%</strong>
+              </div>
+            </div>
+            
+            <div style={styles.vsCircle}>VS</div>
+            
+            <div style={styles.comparisonGroup}>
+              <div style={{...styles.groupLabel, background: '#95a5a6'}}>📊 OTHERS (80%)</div>
+              <div style={styles.metricRow}>
+                <span>Customers:</span>
+                <strong>{comparison.others?.count || 0}</strong>
+              </div>
+              <div style={styles.metricRow}>
+                <span>Avg Order Value:</span>
+                <strong>{formatCurrency(comparison.others?.avgOrderValue)}</strong>
+              </div>
+              <div style={styles.metricRow}>
+                <span>Avg Margin:</span>
+                <strong>{formatCurrency(comparison.others?.avgMargin)}</strong>
+              </div>
+              <div style={styles.metricRow}>
+                <span>Avg Order Frequency:</span>
+                <strong>{(comparison.others?.avgOrderFrequency || 0).toFixed(2)}/mo</strong>
+              </div>
+              <div style={styles.metricRow}>
+                <span>Avg CAGR:</span>
+                <strong>{((comparison.others?.avgCagr || 0) * 100).toFixed(1)}%</strong>
+              </div>
+            </div>
+          </div>
+          
+          {/* Key Differentiators */}
+          {comparison.differentiators && comparison.differentiators.length > 0 && (
+            <div style={styles.differentiators}>
+              <h3 style={styles.diffTitle}>🔍 Key Differentiators</h3>
+              <ul style={styles.diffList}>
+                {comparison.differentiators.map((diff, idx) => (
+                  <li key={idx} style={styles.diffItem}>{diff}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          
+          {/* Industry Distribution */}
+          {comparison.industries && comparison.industries.length > 0 && (
+            <div style={styles.industrySection}>
+              <h3 style={styles.diffTitle}>🏭 Top Industries</h3>
+              <div style={styles.industryGrid}>
+                {comparison.industries.slice(0, 5).map((ind, idx) => (
+                  <div key={idx} style={styles.industryItem}>
+                    <div style={styles.industryName}>{ind.industry}</div>
+                    <div style={styles.industryStats}>
+                      <span style={{color: '#27AE60'}}>Top 20%: {ind.top20_count}</span>
+                      <span style={{color: '#95a5a6'}}>Others: {ind.others_count}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* CAGR Analysis Section */}
+      {cagrAnalysis && cagrAnalysis.summary && (
+        <div style={styles.cagrCard}>
+          <h2 style={styles.tableTitle}>📈 3-Year Growth Analysis (CAGR)</h2>
+          <div style={styles.cagrSummary}>
+            <div style={styles.cagrStat}>
+              <div style={styles.cagrValue}>{cagrAnalysis.summary.consistentGrowers}</div>
+              <div style={styles.cagrLabel}>Consistent Growers</div>
+            </div>
+            <div style={styles.cagrStat}>
+              <div style={{...styles.cagrValue, color: '#27AE60'}}>{cagrAnalysis.summary.growingCount}</div>
+              <div style={styles.cagrLabel}>Growing</div>
+            </div>
+            <div style={styles.cagrStat}>
+              <div style={{...styles.cagrValue, color: '#F39C12'}}>{cagrAnalysis.summary.stableCount}</div>
+              <div style={styles.cagrLabel}>Stable</div>
+            </div>
+            <div style={styles.cagrStat}>
+              <div style={{...styles.cagrValue, color: '#E74C3C'}}>{cagrAnalysis.summary.decliningCount}</div>
+              <div style={styles.cagrLabel}>Declining</div>
+            </div>
+            <div style={styles.cagrStat}>
+              <div style={{...styles.cagrValue, color: '#3498DB'}}>{cagrAnalysis.summary.newCount}</div>
+              <div style={styles.cagrLabel}>New Customers</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Insights Section */}
       <div style={styles.insightsGrid}>
@@ -430,5 +601,176 @@ const styles = {
     color: 'rgba(255,255,255,0.8)',
     fontSize: '14px',
     paddingTop: '20px',
+  },
+  // Comparison Section Styles
+  comparisonCard: {
+    background: 'white',
+    borderRadius: '16px',
+    padding: '30px',
+    marginBottom: '30px',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+  },
+  comparisonHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '24px',
+    flexWrap: 'wrap',
+    gap: '16px',
+  },
+  comparisonTitle: {
+    fontSize: '24px',
+    fontWeight: '700',
+    color: '#2c3e50',
+    margin: '0',
+  },
+  toggleContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+  },
+  toggleLabel: {
+    fontSize: '14px',
+    color: '#7f8c8d',
+    fontWeight: '600',
+  },
+  toggleBtn: {
+    padding: '8px 16px',
+    background: '#f1f3f4',
+    border: 'none',
+    borderRadius: '20px',
+    fontSize: '14px',
+    cursor: 'pointer',
+    color: '#7f8c8d',
+  },
+  toggleBtnActive: {
+    padding: '8px 16px',
+    background: '#667eea',
+    border: 'none',
+    borderRadius: '20px',
+    fontSize: '14px',
+    cursor: 'pointer',
+    color: 'white',
+    fontWeight: '600',
+  },
+  comparisonGrid: {
+    display: 'grid',
+    gridTemplateColumns: '1fr auto 1fr',
+    gap: '20px',
+    alignItems: 'start',
+    marginBottom: '24px',
+  },
+  comparisonGroup: {
+    background: '#f8f9fa',
+    borderRadius: '12px',
+    padding: '20px',
+  },
+  groupLabel: {
+    background: '#27AE60',
+    color: 'white',
+    padding: '8px 16px',
+    borderRadius: '20px',
+    fontSize: '14px',
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: '16px',
+  },
+  metricRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    padding: '10px 0',
+    borderBottom: '1px solid #e0e0e0',
+    fontSize: '14px',
+  },
+  vsCircle: {
+    width: '50px',
+    height: '50px',
+    borderRadius: '50%',
+    background: 'linear-gradient(135deg, #667eea, #764ba2)',
+    color: 'white',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontWeight: '700',
+    fontSize: '16px',
+    alignSelf: 'center',
+  },
+  differentiators: {
+    background: '#f0f9ff',
+    borderRadius: '12px',
+    padding: '20px',
+    marginBottom: '20px',
+    borderLeft: '4px solid #3498DB',
+  },
+  diffTitle: {
+    fontSize: '16px',
+    fontWeight: '700',
+    color: '#2c3e50',
+    marginTop: '0',
+    marginBottom: '12px',
+  },
+  diffList: {
+    margin: '0',
+    paddingLeft: '20px',
+  },
+  diffItem: {
+    fontSize: '14px',
+    color: '#34495e',
+    marginBottom: '8px',
+    lineHeight: '1.5',
+  },
+  industrySection: {
+    marginTop: '20px',
+  },
+  industryGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+    gap: '12px',
+  },
+  industryItem: {
+    background: '#f8f9fa',
+    borderRadius: '8px',
+    padding: '12px',
+    textAlign: 'center',
+  },
+  industryName: {
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#2c3e50',
+    marginBottom: '8px',
+  },
+  industryStats: {
+    display: 'flex',
+    justifyContent: 'space-around',
+    fontSize: '12px',
+  },
+  // CAGR Section Styles
+  cagrCard: {
+    background: 'white',
+    borderRadius: '16px',
+    padding: '30px',
+    marginBottom: '30px',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+  },
+  cagrSummary: {
+    display: 'flex',
+    justifyContent: 'space-around',
+    flexWrap: 'wrap',
+    gap: '20px',
+  },
+  cagrStat: {
+    textAlign: 'center',
+    padding: '15px',
+    minWidth: '120px',
+  },
+  cagrValue: {
+    fontSize: '36px',
+    fontWeight: '700',
+    color: '#2c3e50',
+  },
+  cagrLabel: {
+    fontSize: '14px',
+    color: '#7f8c8d',
+    marginTop: '8px',
   },
 };
