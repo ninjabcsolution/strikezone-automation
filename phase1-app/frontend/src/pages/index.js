@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import toast, { Toaster } from 'react-hot-toast';
 import { 
@@ -9,13 +9,50 @@ import Layout from '../components/Layout';
 
 import { getApiUrl } from '../utils/api';
 
+const FILE_TYPES = [
+  { key: 'customers', label: 'Customers.csv', description: 'Customer master data', order: 1 },
+  { key: 'products', label: 'Products.csv', description: 'Product catalog', order: 2 },
+  { key: 'orders', label: 'Orders.csv', description: 'Order headers', order: 3 },
+  { key: 'orderlines', label: 'OrderLines.csv', description: 'Order line items', order: 4 },
+];
+
 export default function Home() {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [calculating, setCalculating] = useState(false);
   const [result, setResult] = useState(null);
   const [dragActive, setDragActive] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState({});
+  const [selectedType, setSelectedType] = useState('customers');
   const fileInputRef = useRef(null);
+
+  // Fetch upload status from database on load
+  useEffect(() => {
+    const fetchUploadStatus = async () => {
+      try {
+        const token = localStorage.getItem('strikezone_token');
+        const API_URL = getApiUrl();
+        const response = await fetch(`${API_URL}/api/upload/status`, {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        });
+        const data = await response.json();
+        
+        if (response.ok && data.status) {
+          setUploadedFiles(data.status);
+          
+          // Auto-select first non-uploaded file type
+          const firstEmpty = FILE_TYPES.find(ft => !data.status[ft.key]);
+          if (firstEmpty) {
+            setSelectedType(firstEmpty.key);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to fetch upload status:', e);
+      }
+    };
+    
+    fetchUploadStatus();
+  }, []);
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -66,10 +103,33 @@ export default function Home() {
       
       if (response.ok) {
         setResult(data);
-        toast.success(`Successfully uploaded ${data.fileName}`);
+        
+        // Mark this file type as uploaded
+        // Normalize key: order_lines -> orderlines (no underscore)
+        let fileType = data.fileType?.toLowerCase().replace('.csv', '') || selectedType;
+        if (fileType === 'order_lines') fileType = 'orderlines';
+        
+        const uploadInfo = {
+          fileName: data.fileName,
+          rows: data.ingestion?.inserted || 0,
+          timestamp: new Date().toISOString(),
+        };
+        
+        setUploadedFiles(prev => ({
+          ...prev,
+          [fileType]: uploadInfo
+        }));
+        
+        toast.success(`Successfully uploaded ${data.fileName} (${uploadInfo.rows} rows)`);
         setFile(null);
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
+        }
+        
+        // Auto-advance to next file type
+        const currentIndex = FILE_TYPES.findIndex(ft => ft.key === fileType);
+        if (currentIndex < FILE_TYPES.length - 1) {
+          setSelectedType(FILE_TYPES[currentIndex + 1].key);
         }
       } else {
         toast.error(data.error || 'Upload failed');
@@ -98,6 +158,17 @@ export default function Home() {
       setCalculating(false);
     }
   };
+
+  const resetUploadState = () => {
+    setUploadedFiles({});
+    localStorage.removeItem('strikezone_uploaded_files');
+    setSelectedType('customers');
+    setResult(null);
+    toast.success('Upload state reset. Ready for fresh upload.');
+  };
+
+  const allFilesUploaded = FILE_TYPES.every(ft => uploadedFiles[ft.key]);
+  const uploadProgress = FILE_TYPES.filter(ft => uploadedFiles[ft.key]).length;
 
   return (
     <Layout>
@@ -141,10 +212,134 @@ export default function Home() {
           ))}
         </div>
 
+        {/* Upload Progress Bar */}
+        <div style={{ background: 'white', borderRadius: '16px', padding: '20px 30px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)', marginBottom: '25px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+            <h3 style={{ margin: 0, fontSize: '16px', color: '#1f2937' }}>
+              Upload Progress: {uploadProgress} / {FILE_TYPES.length} files
+            </h3>
+            <button
+              onClick={resetUploadState}
+              style={{
+                padding: '8px 16px',
+                background: '#f3f4f6',
+                color: '#6b7280',
+                border: '1px solid #e5e7eb',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: '500',
+              }}
+            >
+              Reset All
+            </button>
+          </div>
+          
+          {/* Progress Bar */}
+          <div style={{ 
+            height: '8px', 
+            background: '#e5e7eb', 
+            borderRadius: '4px', 
+            overflow: 'hidden',
+            marginBottom: '20px'
+          }}>
+            <div style={{ 
+              width: `${(uploadProgress / FILE_TYPES.length) * 100}%`, 
+              height: '100%', 
+              background: allFilesUploaded ? '#10b981' : '#2563eb',
+              transition: 'width 0.3s ease'
+            }} />
+          </div>
+
+          {/* File Type Tabs */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
+            {FILE_TYPES.map((ft, idx) => {
+              const isUploaded = !!uploadedFiles[ft.key];
+              const isSelected = selectedType === ft.key;
+              const isNext = !isUploaded && FILE_TYPES.slice(0, idx).every(f => uploadedFiles[f.key]);
+              
+              return (
+                <button
+                  key={ft.key}
+                  onClick={() => setSelectedType(ft.key)}
+                  style={{
+                    padding: '15px',
+                    background: isUploaded ? '#f0fdf4' : isSelected ? '#eff6ff' : 'white',
+                    border: isSelected ? '2px solid #2563eb' : isUploaded ? '2px solid #10b981' : '2px solid #e5e7eb',
+                    borderRadius: '10px',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    position: 'relative',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  {/* Step number */}
+                  <div style={{
+                    position: 'absolute',
+                    top: '-10px',
+                    left: '10px',
+                    background: isUploaded ? '#10b981' : isSelected ? '#2563eb' : '#9ca3af',
+                    color: 'white',
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '12px',
+                    fontWeight: '700',
+                  }}>
+                    {isUploaded ? <HiCheckCircle size={16} /> : ft.order}
+                  </div>
+                  
+                  <div style={{ marginTop: '5px' }}>
+                    <div style={{ 
+                      fontSize: '14px', 
+                      fontWeight: '600', 
+                      color: isUploaded ? '#166534' : '#1f2937',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}>
+                      {ft.label}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+                      {isUploaded ? (
+                        <span style={{ color: '#16a34a' }}>
+                          ✓ {uploadedFiles[ft.key].rows} rows
+                        </span>
+                      ) : (
+                        ft.description
+                      )}
+                    </div>
+                  </div>
+                  
+                  {isNext && !isUploaded && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '-10px',
+                      right: '10px',
+                      background: '#fef3c7',
+                      color: '#d97706',
+                      padding: '2px 8px',
+                      borderRadius: '10px',
+                      fontSize: '10px',
+                      fontWeight: '600',
+                    }}>
+                      NEXT
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Upload Panel */}
         <div style={{ background: 'white', borderRadius: '16px', padding: '30px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)', marginBottom: '25px' }}>
           <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', fontSize: '18px', color: '#1f2937' }}>
-            <HiCloudUpload size={24} color="#2563eb" /> Upload ERP Data
+            <HiCloudUpload size={24} color="#2563eb" /> 
+            Upload {FILE_TYPES.find(ft => ft.key === selectedType)?.label}
           </h3>
           
           {/* Drag and Drop Zone */}
@@ -186,7 +381,7 @@ export default function Home() {
             ) : (
               <div>
                 <p style={{ fontSize: '16px', fontWeight: '600', color: '#374151', marginBottom: '5px' }}>
-                  Drag & drop your CSV file here
+                  Drag & drop {FILE_TYPES.find(ft => ft.key === selectedType)?.label} here
                 </p>
                 <p style={{ fontSize: '13px', color: '#6b7280' }}>
                   or click to browse
@@ -272,6 +467,31 @@ export default function Home() {
           </div>
         )}
 
+        {/* All Files Uploaded Success */}
+        {allFilesUploaded && (
+          <div style={{ background: '#f0fdf4', padding: '24px', borderRadius: '14px', border: '2px solid #10b981', marginBottom: '25px', textAlign: 'center' }}>
+            <HiCheckCircle size={48} color="#10b981" style={{ marginBottom: '10px' }} />
+            <h3 style={{ color: '#166534', margin: '0 0 10px 0', fontSize: '20px' }}>
+              All Files Uploaded Successfully!
+            </h3>
+            <p style={{ color: '#16a34a', marginBottom: '20px' }}>
+              You can now calculate customer metrics and analyze your data.
+            </p>
+            <Link href="/ceo-dashboard" style={{
+              display: 'inline-block',
+              padding: '14px 28px',
+              background: '#10b981',
+              color: 'white',
+              borderRadius: '10px',
+              textDecoration: 'none',
+              fontWeight: '600',
+              fontSize: '15px',
+            }}>
+              Go to CEO Dashboard →
+            </Link>
+          </div>
+        )}
+
         {/* Analytics Panel */}
         <div style={{ background: 'white', borderRadius: '16px', padding: '28px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)', marginBottom: '25px' }}>
           <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '18px', fontSize: '18px', color: '#1f2937' }}>
@@ -279,14 +499,14 @@ export default function Home() {
           </h3>
           <button 
             onClick={handleCalculateMetrics}
-            disabled={calculating}
+            disabled={calculating || !uploadedFiles.customers || !uploadedFiles.orders}
             style={{
               padding: '14px 24px',
-              background: calculating ? '#9ca3af' : '#10b981',
+              background: calculating || !uploadedFiles.customers || !uploadedFiles.orders ? '#9ca3af' : '#10b981',
               color: 'white',
               border: 'none',
               borderRadius: '10px',
-              cursor: calculating ? 'not-allowed' : 'pointer',
+              cursor: calculating || !uploadedFiles.customers || !uploadedFiles.orders ? 'not-allowed' : 'pointer',
               fontSize: '15px',
               fontWeight: '600',
               display: 'inline-flex',
@@ -297,28 +517,10 @@ export default function Home() {
             {calculating ? <><HiOutlineRefresh size={18} /> Calculating...</> : 'Calculate Top 20% Metrics'}
           </button>
           <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '12px' }}>
-            Run after uploading Customers and Orders data to analyze your top customers
+            {uploadedFiles.customers && uploadedFiles.orders 
+              ? 'Ready to calculate! Click the button above.'
+              : 'Upload Customers and Orders data first to enable analytics'}
           </p>
-        </div>
-
-        {/* Supported Files Info */}
-        <div style={{ background: '#eff6ff', borderRadius: '14px', padding: '24px', border: '1px solid #bfdbfe' }}>
-          <h4 style={{ margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '15px', color: '#1e40af' }}>
-            <HiDocumentText size={20} /> Supported Files
-          </h4>
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            {['Customers.csv', 'Orders.csv', 'OrderLines.csv', 'Products.csv'].map(f => (
-              <span key={f} style={{ 
-                background: 'white', 
-                padding: '8px 14px', 
-                borderRadius: '8px', 
-                fontSize: '13px', 
-                fontWeight: '500',
-                color: '#374151',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-              }}>{f}</span>
-            ))}
-          </div>
         </div>
       </div>
 

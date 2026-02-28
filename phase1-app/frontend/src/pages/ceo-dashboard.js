@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { HiLightBulb, HiTarget, HiTrendingUp, HiChartBar, HiSwitchHorizontal } from 'react-icons/hi';
+import { HiLightBulb, HiTrendingUp, HiOutlineLightningBolt } from 'react-icons/hi';
 import Layout from '../components/Layout';
 import { getApiUrl } from '../utils/api';
 
@@ -335,7 +335,7 @@ export default function CEODashboard() {
         
         <div style={styles.insightCard}>
           <div style={styles.insightIconWrap}>
-            <HiTarget size={32} color="#10b981" />
+            <span style={{fontSize: '28px'}}>🎯</span>
           </div>
           <h3 style={styles.insightTitle}>Next Steps</h3>
           <p style={styles.insightText}>
