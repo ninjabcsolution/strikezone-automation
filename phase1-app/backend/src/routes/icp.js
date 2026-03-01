@@ -1,8 +1,12 @@
 const express = require('express');
 const icpTraitsService = require('../services/icpTraitsService');
 const icpProfileService = require('../services/icpProfileService');
+const { optionalAuth } = require('../middleware/auth');
 
 const router = express.Router();
+
+// Apply optional auth to all ICP routes for user data isolation
+router.use(optionalAuth);
 
 function csvEscape(v) {
   if (v === null || v === undefined) return '';

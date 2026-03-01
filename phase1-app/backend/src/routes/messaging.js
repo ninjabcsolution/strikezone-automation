@@ -11,11 +11,15 @@
 const express = require('express');
 const messagingService = require('../services/messagingService');
 const openaiService = require('../services/openaiService');
+const { optionalAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
+// Apply optional auth to all messaging routes for user data isolation
+router.use(optionalAuth);
+
 function getActor(req) {
-  return req.header('X-Actor') || 'api';
+  return req.user?.email || req.header('X-Actor') || 'api';
 }
 
 // ========================================

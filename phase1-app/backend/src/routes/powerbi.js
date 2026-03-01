@@ -2,13 +2,17 @@ const express = require('express');
 const multer = require('multer');
 const powerbiImportService = require('../services/powerbiImportService');
 const { csvToJson } = require('../services/csvJsonService');
+const { optionalAuth } = require('../middleware/auth');
 
 const router = express.Router();
+
+// Apply optional auth to all powerbi routes for user data isolation
+router.use(optionalAuth);
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
 
 function getActor(req) {
-  return req.header('X-Actor') || 'unknown';
+  return req.user?.email || req.header('X-Actor') || 'unknown';
 }
 
 // POST /api/powerbi/import/targets

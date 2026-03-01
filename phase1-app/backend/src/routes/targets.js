@@ -1,10 +1,14 @@
 const express = require('express');
 const targetsService = require('../services/targetsService');
+const { optionalAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
+// Apply optional auth to all targets routes for user data isolation
+router.use(optionalAuth);
+
 function getActor(req) {
-  return req.header('X-Actor') || 'unknown';
+  return req.user?.email || req.header('X-Actor') || 'unknown';
 }
 
 // GET /api/targets?status=&tier=&q=&limit=&offset=&page=

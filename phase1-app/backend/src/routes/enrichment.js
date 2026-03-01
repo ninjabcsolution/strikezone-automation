@@ -1,8 +1,12 @@
 const express = require('express');
 const { pool } = require('../config/database');
 const apolloService = require('../services/apolloService');
+const { optionalAuth } = require('../middleware/auth');
 
 const router = express.Router();
+
+// Apply optional auth to all enrichment routes for user data isolation
+router.use(optionalAuth);
 
 // POST /api/enrichment/search-people - Search for contacts at specified domains
 router.post('/search-people', async (req, res) => {

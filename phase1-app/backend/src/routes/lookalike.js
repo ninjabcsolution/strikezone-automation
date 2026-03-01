@@ -1,11 +1,15 @@
 const express = require('express');
 const lookalikeGenerationService = require('../services/lookalikeGenerationService');
 const icpProfileService = require('../services/icpProfileService');
+const { optionalAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
+// Apply optional auth to all lookalike routes for user data isolation
+router.use(optionalAuth);
+
 function getActor(req) {
-  return req.header('X-Actor') || 'unknown';
+  return req.user?.email || req.header('X-Actor') || 'unknown';
 }
 
 // GET /api/lookalike/providers - List available lookalike providers
