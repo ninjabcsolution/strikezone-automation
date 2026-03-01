@@ -100,10 +100,18 @@ class TargetsService {
       where.push(`(company_name ILIKE $${params.length} OR domain ILIKE $${params.length})`);
     }
 
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    
+    // Get total count
+    const countResult = await pool.query(
+      `SELECT COUNT(*) as total FROM lookalike_targets ${whereSql}`,
+      params
+    );
+    const total = parseInt(countResult.rows[0].total, 10);
+
     params.push(limit);
     params.push(offset);
 
-    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
     const result = await pool.query(
       `SELECT *
        FROM lookalike_targets
@@ -112,7 +120,15 @@ class TargetsService {
        LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params
     );
-    return result.rows;
+    
+    return {
+      rows: result.rows,
+      total,
+      limit,
+      offset,
+      totalPages: Math.ceil(total / limit),
+      page: Math.floor(offset / limit) + 1
+    };
   }
 
   async getTarget(targetId) {
@@ -207,7 +223,8 @@ class TargetsService {
   }
 
   async exportTargetsCsv({ status, tier, source, segment, q }) {
-    const rows = await this.listTargets({ status, tier, source, segment, q, limit: 5000, offset: 0 });
+    const result = await this.listTargets({ status, tier, source, segment, q, limit: 5000, offset: 0 });
+    const rows = result.rows;
 
     const headers = [
       'target_id',

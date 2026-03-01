@@ -7,7 +7,7 @@ function getActor(req) {
   return req.header('X-Actor') || 'unknown';
 }
 
-// GET /api/targets?status=&tier=&q=&limit=&offset=
+// GET /api/targets?status=&tier=&q=&limit=&offset=&page=
 router.get('/', async (req, res) => {
   try {
     const status = req.query.status || undefined;
@@ -15,11 +15,23 @@ router.get('/', async (req, res) => {
     const source = req.query.source || undefined;
     const segment = req.query.segment || undefined;
     const q = req.query.q || undefined;
-    const limit = req.query.limit ? Math.min(parseInt(req.query.limit, 10) || 100, 500) : 100;
-    const offset = req.query.offset ? parseInt(req.query.offset, 10) || 0 : 0;
+    const limit = req.query.limit ? Math.min(parseInt(req.query.limit, 10) || 20, 500) : 20;
+    const page = req.query.page ? parseInt(req.query.page, 10) || 1 : 1;
+    const offset = req.query.offset ? parseInt(req.query.offset, 10) : (page - 1) * limit;
 
-    const targets = await targetsService.listTargets({ status, tier, source, segment, q, limit, offset });
-    res.json({ status: 'success', targets, limit, offset });
+    const result = await targetsService.listTargets({ status, tier, source, segment, q, limit, offset });
+    res.json({ 
+      status: 'success', 
+      targets: result.rows, 
+      pagination: {
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        totalPages: result.totalPages,
+        hasNext: result.page < result.totalPages,
+        hasPrev: result.page > 1
+      }
+    });
   } catch (err) {
     res.status(500).json({ error: 'Failed to list targets', message: err.message });
   }

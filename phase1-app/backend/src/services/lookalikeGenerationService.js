@@ -374,20 +374,10 @@ class LookalikeGenerationService {
   async generateFromApollo({ q, page = 1, perPage = 25 }, actor) {
     const icp = await icpProfileService.getTop20Profile();
 
-    // Basic auto-derived filters from ICP:
-    // - Focus the search on top industries & top states.
-    const industryValues = icp.industries.map((i) => i.value).slice(0, 5);
-    const stateValues = icp.states.map((s) => s.value).slice(0, 5);
-
+    // NOTE: Don't add restrictive filters by default - they often result in 0 results.
+    // The ICP profile is used for SCORING, not for filtering the Apollo search.
+    // Users can search broadly, and we'll score/rank based on ICP match.
     const filters = {};
-    // Apollo accepts various filter keys; for MVP we pass 'organization_locations' and 'organization_industries'
-    // This may need adjustment per your Apollo plan/fields.
-    if (industryValues.length) {
-      filters.organization_industries = industryValues;
-    }
-    if (stateValues.length) {
-      filters.organization_locations = stateValues;
-    }
 
     const data = await apolloService.searchCompanies({ q, page, perPage, filters }, actor);
 

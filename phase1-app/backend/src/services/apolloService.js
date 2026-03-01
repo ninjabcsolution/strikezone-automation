@@ -35,6 +35,9 @@ class ApolloService {
     });
 
     const data = await resp.json().catch(() => ({}));
+    
+    // Debug: log what Apollo returns
+    console.log('[Apollo] Response status:', resp.status, 'Organizations count:', data?.organizations?.length || 0);
 
     if (!resp.ok) {
       await auditLogService.log({

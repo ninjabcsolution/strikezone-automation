@@ -160,26 +160,49 @@ router.get('/runs', async (req, res) => {
 // GET /api/enrichment/contacts - List enriched contacts
 router.get('/contacts', async (req, res) => {
   try {
-    const { runId, companyId, targetId, limit = 100, offset = 0 } = req.query;
+    const { runId, companyId, targetId, limit: limitStr, page: pageStr } = req.query;
+    const limit = limitStr ? Math.min(parseInt(limitStr, 10) || 20, 100) : 20;
+    const page = pageStr ? parseInt(pageStr, 10) || 1 : 1;
+    const offset = (page - 1) * limit;
 
-    let query = `SELECT * FROM enriched_contacts WHERE 1=1`;
+    let whereClause = '1=1';
     const params = [];
     let paramIndex = 1;
 
     if (runId) {
-      query += ` AND enrichment_run_id = $${paramIndex++}`;
+      whereClause += ` AND enrichment_run_id = $${paramIndex++}`;
       params.push(runId);
     }
     if (companyId || targetId) {
-      query += ` AND target_id = $${paramIndex++}`;
+      whereClause += ` AND target_id = $${paramIndex++}`;
       params.push(companyId || targetId);
     }
 
-    query += ` ORDER BY created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
-    params.push(parseInt(limit, 10), parseInt(offset, 10));
+    // Get total count
+    const countResult = await pool.query(
+      `SELECT COUNT(*) as total FROM enriched_contacts WHERE ${whereClause}`,
+      params
+    );
+    const total = parseInt(countResult.rows[0].total, 10);
+
+    // Get paginated results
+    const query = `SELECT * FROM enriched_contacts WHERE ${whereClause} ORDER BY created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
+    params.push(limit, offset);
 
     const result = await pool.query(query, params);
-    res.json({ contacts: result.rows });
+    const totalPages = Math.ceil(total / limit);
+    
+    res.json({ 
+      contacts: result.rows,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      }
+    });
   } catch (err) {
     console.error('List contacts error:', err);
     res.status(500).json({ error: err.message });

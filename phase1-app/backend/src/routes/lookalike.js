@@ -78,14 +78,19 @@ router.post('/generate', async (req, res) => {
         actor
       );
     } catch (apiErr) {
-      // If API fails (402 payment required, etc), fall back to demo mode
-      if (apiErr.statusCode === 402 || apiErr.message?.includes('free plan')) {
-        console.log('API plan limit - falling back to demo mode');
+      // If API fails (no key, 402, etc), fall back to demo mode
+      const isNoApiKey = apiErr.message?.includes('API_KEY is not set');
+      const isPlanLimit = apiErr.statusCode === 402 || apiErr.message?.includes('free plan');
+      
+      if (isNoApiKey || isPlanLimit) {
+        console.log('API unavailable - falling back to demo mode:', apiErr.message);
         result = await lookalikeGenerationService.generateDemoData(
           { page: parseInt(page, 10) || 1, perPage: Math.min(parseInt(perPage, 10) || 25, 100) },
           actor
         );
-        result.fallbackReason = 'API requires paid plan - using demo data';
+        result.fallbackReason = isNoApiKey 
+          ? 'No API key configured - using demo data' 
+          : 'API requires paid plan - using demo data';
       } else {
         throw apiErr;
       }
