@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import Layout from '../components/Layout';
+import Pagination from '../components/Pagination';
 import { getApiUrl } from '../utils/api';
 
 const getAPI_URL = () => typeof window !== 'undefined' ? getApiUrl() : 'http://localhost:5002';
@@ -33,6 +34,8 @@ export default function ApprovalPortal() {
   const [query, setQuery] = useState('');
 
   const [targets, setTargets] = useState([]);
+  const [pagination, setPagination] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -70,13 +73,14 @@ export default function ApprovalPortal() {
     return `${getAPI_URL()}/api/targets/export.csv?${params.toString()}`;
   }, [statusFilter, tierFilter, sourceFilter, segmentFilter, query]);
 
-  const fetchTargets = async () => {
+  const fetchTargets = async (page = currentPage) => {
     setLoading(true);
     setError(null);
 
     try {
       const params = new URLSearchParams();
-      params.set('limit', '200');
+      params.set('limit', '20');
+      params.set('page', String(page));
       if (statusFilter) params.set('status', statusFilter);
       if (tierFilter) params.set('tier', tierFilter);
       if (sourceFilter) params.set('source', sourceFilter);
@@ -86,12 +90,19 @@ export default function ApprovalPortal() {
       const res = await fetch(`${getAPI_URL()}/api/targets?${params.toString()}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data?.message || 'Failed to fetch targets');
+      console.log('API Response:', { targetsCount: data.targets?.length, pagination: data.pagination });
       setTargets(data.targets || []);
+      setPagination(data.pagination || null);
+      setCurrentPage(page);
     } catch (e) {
       setError(e.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePageChange = (newPage) => {
+    fetchTargets(newPage);
   };
 
   useEffect(() => {
@@ -557,6 +568,8 @@ export default function ApprovalPortal() {
             </table>
 
             {targets.length === 0 && <div style={styles.hint}>No targets match the current filters.</div>}
+            
+            <Pagination pagination={pagination} onPageChange={handlePageChange} />
           </div>
         )}
       </section>
@@ -575,6 +588,9 @@ function TargetRow({ target, onUpdate, onApprove }) {
     setSaving(true);
     try {
       await onUpdate({ tier, notes });
+      toast.success(`Target #${target.target_id} saved!`);
+    } catch (err) {
+      toast.error(`Failed to save: ${err.message}`);
     } finally {
       setSaving(false);
     }
@@ -584,6 +600,9 @@ function TargetRow({ target, onUpdate, onApprove }) {
     setApproving(true);
     try {
       await onApprove(action);
+      toast.success(`Target #${target.target_id} ${action}!`);
+    } catch (err) {
+      toast.error(`Failed to ${action}: ${err.message}`);
     } finally {
       setApproving(false);
     }

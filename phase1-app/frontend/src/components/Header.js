@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { HiLogout, HiQuestionMarkCircle, HiCog, HiUser, HiChevronDown, HiShieldCheck } from 'react-icons/hi';
 import Logo from './Logo';
 import { useAuth } from '../context/AuthContext';
 
@@ -25,11 +24,25 @@ export default function Header() {
     return name.substring(0, 2).toUpperCase();
   };
 
+  // Navigation items
+  const navItems = [
+    { href: '/', label: 'Upload', icon: '📤' },
+    { href: '/ceo-dashboard', label: 'CEO Dashboard', icon: '📊' },
+    { href: '/icp-dashboard', label: 'ICP Dashboard', icon: '🎯' },
+    { href: '/approval-portal', label: 'Approval', icon: '✅' },
+    { href: '/messaging-portal', label: 'Messaging', icon: '📨' },
+  ];
+
+  const isActive = (href) => {
+    if (href === '/') return router.pathname === '/';
+    return router.pathname.startsWith(href);
+  };
+
   return (
     <header style={{
       background: 'white',
       borderBottom: '1px solid #e5e7eb',
-      padding: '12px 24px',
+      padding: '0 24px',
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
@@ -37,31 +50,82 @@ export default function Header() {
       top: 0,
       zIndex: 100,
       boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+      height: '60px',
     }}>
       {/* Left - Logo */}
-      <Link href="/" style={{ textDecoration: 'none' }}>
-        <Logo size={36} />
+      <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
+        <Logo size={32} />
       </Link>
 
-      {/* Right - Navigation */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-        {/* Guide Link */}
-        <Link href="/guide" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px', color: '#6b7280', fontSize: '14px', fontWeight: '500' }}>
-          <HiQuestionMarkCircle size={18} />
-          Guide
-        </Link>
+      {/* Center - Main Navigation */}
+      <nav style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+        {navItems.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            style={{
+              textDecoration: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 14px',
+              borderRadius: '8px',
+              fontSize: '13px',
+              fontWeight: isActive(item.href) ? '600' : '500',
+              color: isActive(item.href) ? '#2563eb' : '#6b7280',
+              background: isActive(item.href) ? '#eff6ff' : 'transparent',
+              transition: 'all 0.15s ease',
+            }}
+            onMouseEnter={(e) => {
+              if (!isActive(item.href)) {
+                e.currentTarget.style.background = '#f3f4f6';
+                e.currentTarget.style.color = '#374151';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isActive(item.href)) {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = '#6b7280';
+              }
+            }}
+          >
+            <span style={{ fontSize: '16px' }}>{item.icon}</span>
+            {item.label}
+          </Link>
+        ))}
+      </nav>
 
-        {/* FAQ Link */}
-        <Link href="/faq" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px', color: '#6b7280', fontSize: '14px', fontWeight: '500' }}>
-          <HiQuestionMarkCircle size={18} />
-          FAQ
+      {/* Right - User Menu */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        {/* Help Links */}
+        <Link href="/guide" style={{ 
+          textDecoration: 'none', 
+          color: '#9ca3af', 
+          fontSize: '13px',
+          padding: '6px 10px',
+          borderRadius: '6px',
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.color = '#6b7280'; e.currentTarget.style.background = '#f3f4f6'; }}
+        onMouseLeave={(e) => { e.currentTarget.style.color = '#9ca3af'; e.currentTarget.style.background = 'transparent'; }}
+        >
+          Help
         </Link>
 
         {/* Admin Link (if admin) */}
         {isAdmin && (
-          <Link href="/admin" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px', color: '#8b5cf6', fontSize: '14px', fontWeight: '500' }}>
-            <HiShieldCheck size={18} />
-            Admin
+          <Link href="/admin" style={{ 
+            textDecoration: 'none', 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '4px', 
+            color: '#8b5cf6', 
+            fontSize: '13px', 
+            fontWeight: '500',
+            padding: '6px 10px',
+            background: '#f5f3ff',
+            borderRadius: '6px',
+          }}>
+            🛡️ Admin
           </Link>
         )}
 
@@ -72,34 +136,34 @@ export default function Header() {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '10px',
-              padding: '6px 12px',
-              background: '#f3f4f6',
+              gap: '8px',
+              padding: '4px 10px 4px 4px',
+              background: '#f9fafb',
               border: '1px solid #e5e7eb',
-              borderRadius: '8px',
+              borderRadius: '24px',
               cursor: 'pointer',
-              fontSize: '14px',
+              fontSize: '13px',
             }}
           >
             {/* Avatar */}
             <div style={{
-              width: 32,
-              height: 32,
+              width: 28,
+              height: 28,
               borderRadius: '50%',
               background: 'linear-gradient(135deg, #2563eb, #7c3aed)',
               color: 'white',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '12px',
+              fontSize: '11px',
               fontWeight: '700',
             }}>
               {getInitials(user?.fullName)}
             </div>
-            <span style={{ fontWeight: '500', color: '#374151' }}>
-              {user?.fullName || 'User'}
+            <span style={{ fontWeight: '500', color: '#374151', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {user?.fullName?.split(' ')[0] || 'User'}
             </span>
-            <HiChevronDown size={16} color="#6b7280" />
+            <span style={{ fontSize: '10px', color: '#9ca3af' }}>▼</span>
           </button>
 
           {/* Dropdown Menu */}
@@ -151,7 +215,7 @@ export default function Header() {
 
                 {/* Menu Items */}
                 <div style={{ padding: '8px' }}>
-                  <Link href="/profile" style={{ textDecoration: 'none' }}>
+                  <Link href="/guide" onClick={() => setShowDropdown(false)} style={{ textDecoration: 'none' }}>
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -165,10 +229,29 @@ export default function Header() {
                     onMouseEnter={(e) => e.currentTarget.style.background = '#f3f4f6'}
                     onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                     >
-                      <HiUser size={18} color="#6b7280" />
-                      Profile
+                      📖 Guide
                     </div>
                   </Link>
+
+                  <Link href="/faq" onClick={() => setShowDropdown(false)} style={{ textDecoration: 'none' }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '10px 12px',
+                      borderRadius: '6px',
+                      color: '#374151',
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = '#f3f4f6'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                      ❓ FAQ
+                    </div>
+                  </Link>
+
+                  <div style={{ height: '1px', background: '#f3f4f6', margin: '4px 0' }} />
 
                   <div
                     onClick={handleLogout}
@@ -185,8 +268,7 @@ export default function Header() {
                     onMouseEnter={(e) => e.currentTarget.style.background = '#fef2f2'}
                     onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                   >
-                    <HiLogout size={18} />
-                    Sign Out
+                    🚪 Sign Out
                   </div>
                 </div>
               </div>

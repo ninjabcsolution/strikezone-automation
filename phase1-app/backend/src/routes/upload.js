@@ -115,4 +115,44 @@ router.get('/logs', async (req, res) => {
   }
 });
 
+// Check upload status - returns row counts for each table
+router.get('/status', async (req, res) => {
+  try {
+    const tables = ['customers', 'products', 'orders', 'order_lines'];
+    const status = {};
+    
+    for (const table of tables) {
+      try {
+        const result = await pool.query(`SELECT COUNT(*) as count FROM ${table}`);
+        const count = parseInt(result.rows[0].count, 10);
+        if (count > 0) {
+          // Get last upload info from ingestion_logs
+          const logResult = await pool.query(
+            `SELECT file_name, rows_inserted, ingested_at 
+             FROM ingestion_logs 
+             WHERE file_type = $1 AND status = 'success'
+             ORDER BY ingested_at DESC 
+             LIMIT 1`,
+            [table === 'order_lines' ? 'order_lines' : table]
+          );
+          
+          const key = table === 'order_lines' ? 'orderlines' : table;
+          status[key] = {
+            rows: count,
+            fileName: logResult.rows[0]?.file_name || `${table}.csv`,
+            timestamp: logResult.rows[0]?.ingested_at || new Date().toISOString()
+          };
+        }
+      } catch (e) {
+        // Table might not exist, skip
+      }
+    }
+    
+    res.json({ status });
+  } catch (error) {
+    console.error('Status check error:', error);
+    res.status(500).json({ error: 'Failed to check upload status' });
+  }
+});
+
 module.exports = router;

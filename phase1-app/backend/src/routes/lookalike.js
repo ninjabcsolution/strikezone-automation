@@ -65,16 +65,36 @@ router.post('/generate', async (req, res) => {
     // Support legacy 'q' param by adding to filters
     if (q && !filters.q) filters.q = q;
 
-    const result = await lookalikeGenerationService.generate(
-      {
-        provider,
-        filters,
-        page: parseInt(page, 10) || 1,
-        perPage: Math.min(parseInt(perPage, 10) || 25, 100),
-        useIntent,
-      },
-      actor
-    );
+    let result;
+    try {
+      result = await lookalikeGenerationService.generate(
+        {
+          provider,
+          filters,
+          page: parseInt(page, 10) || 1,
+          perPage: Math.min(parseInt(perPage, 10) || 25, 100),
+          useIntent,
+        },
+        actor
+      );
+    } catch (apiErr) {
+      // If API fails (no key, 402, etc), fall back to demo mode
+      const isNoApiKey = apiErr.message?.includes('API_KEY is not set');
+      const isPlanLimit = apiErr.statusCode === 402 || apiErr.message?.includes('free plan');
+      
+      if (isNoApiKey || isPlanLimit) {
+        console.log('API unavailable - falling back to demo mode:', apiErr.message);
+        result = await lookalikeGenerationService.generateDemoData(
+          { page: parseInt(page, 10) || 1, perPage: Math.min(parseInt(perPage, 10) || 25, 100) },
+          actor
+        );
+        result.fallbackReason = isNoApiKey 
+          ? 'No API key configured - using demo data' 
+          : 'API requires paid plan - using demo data';
+      } else {
+        throw apiErr;
+      }
+    }
 
     res.json({ status: 'success', ...result });
   } catch (err) {

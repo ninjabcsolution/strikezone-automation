@@ -1,5 +1,26 @@
 -- Phase 4A: Contact Enrichment Schema
 
+-- Lookalike companies (target companies from lookalike generation)
+CREATE TABLE IF NOT EXISTS lookalike_companies (
+  id SERIAL PRIMARY KEY,
+  company_name VARCHAR(256) NOT NULL,
+  domain VARCHAR(256),
+  industry VARCHAR(128),
+  employee_count INT,
+  revenue_range VARCHAR(64),
+  location VARCHAR(256),
+  icp_score DECIMAL(5,2),
+  source VARCHAR(64), -- apollo, zoominfo, sixsense
+  source_id VARCHAR(128),
+  raw_data JSONB,
+  status VARCHAR(32) DEFAULT 'pending', -- pending, enriching, enriched, approved, rejected
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_lookalike_companies_domain ON lookalike_companies(domain);
+CREATE INDEX IF NOT EXISTS idx_lookalike_companies_status ON lookalike_companies(status);
+
 -- Enrichment runs track batch enrichment jobs
 CREATE TABLE IF NOT EXISTS enrichment_runs (
   id SERIAL PRIMARY KEY,

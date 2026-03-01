@@ -42,7 +42,7 @@ CREATE INDEX IF NOT EXISTS idx_ingestion_logs_user ON ingestion_logs(user_id);
 INSERT INTO users (email, password_hash, full_name, company_name, role, status)
 VALUES (
     'admin@strikezone.io',
-    '$2b$10$rQZ5QH.qKv5R5Y5Z5Y5Z5OqQY5QH.qKv5R5Y5Z5Y5Z5OqQY5QH.q',
+    '$2a$10$y3TDBkkV02Zjclmc0pvSYO41GqfX3eztnG9BjShvwKXJkTWq.MK1G',
     'System Admin',
     'Strikezone',
     'admin',
