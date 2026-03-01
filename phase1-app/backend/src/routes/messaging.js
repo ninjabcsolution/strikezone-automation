@@ -151,6 +151,44 @@ router.post('/generate/batch', async (req, res) => {
 });
 
 // ========================================
+// Bulk Operations (must come before :id routes)
+// ========================================
+
+// POST /api/messaging/messages/bulk/approve - Bulk approve messages
+router.post('/messages/bulk/approve', async (req, res) => {
+  try {
+    const actor = getActor(req);
+    const { ids } = req.body;
+
+    if (!ids || !ids.length) {
+      return res.status(400).json({ error: 'ids array is required' });
+    }
+
+    const result = await messagingService.bulkApprove(ids, actor, actor);
+    res.json({ approved: result.length, ids: result.map(r => r.id) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/messaging/messages/bulk/reject - Bulk reject messages
+router.post('/messages/bulk/reject', async (req, res) => {
+  try {
+    const actor = getActor(req);
+    const { ids, reason } = req.body;
+
+    if (!ids || !ids.length) {
+      return res.status(400).json({ error: 'ids array is required' });
+    }
+
+    const result = await messagingService.bulkReject(ids, reason || 'Bulk rejected', actor, actor);
+    res.json({ rejected: result.length, ids: result.map(r => r.id) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ========================================
 // Message Retrieval
 // ========================================
 
@@ -258,40 +296,6 @@ router.post('/messages/:id/edit', async (req, res) => {
       return res.status(404).json({ error: 'Message not found' });
     }
     res.json({ message });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// POST /api/messaging/messages/bulk/approve - Bulk approve messages
-router.post('/messages/bulk/approve', async (req, res) => {
-  try {
-    const actor = getActor(req);
-    const { ids } = req.body;
-
-    if (!ids || !ids.length) {
-      return res.status(400).json({ error: 'ids array is required' });
-    }
-
-    const result = await messagingService.bulkApprove(ids, actor, actor);
-    res.json({ approved: result.length, ids: result.map(r => r.id) });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// POST /api/messaging/messages/bulk/reject - Bulk reject messages
-router.post('/messages/bulk/reject', async (req, res) => {
-  try {
-    const actor = getActor(req);
-    const { ids, reason } = req.body;
-
-    if (!ids || !ids.length) {
-      return res.status(400).json({ error: 'ids array is required' });
-    }
-
-    const result = await messagingService.bulkReject(ids, reason || 'Bulk rejected', actor, actor);
-    res.json({ rejected: result.length, ids: result.map(r => r.id) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
