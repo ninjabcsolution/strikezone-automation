@@ -1,344 +1,476 @@
-# Strikezone MVP Testing Guide
-## Step-by-Step UI Testing Instructions
+# Strikezone Automation - Testing Guide
+
+This guide provides step-by-step instructions to test all features of the Strikezone Automation platform with example data and expected outputs.
+
+## Prerequisites
+
+1. Backend running on `http://localhost:5002`
+2. Frontend running on `http://localhost:5000`
+3. PostgreSQL database configured and running
 
 ---
 
-## 🚀 Step 0: Start the Application
+## 1. CEO Dashboard Testing
 
-### Terminal 1 - Start Backend:
+### 1.1 Upload Sample Data
+
+**Via UI:**
+1. Navigate to `http://localhost:5000/ceo-dashboard`
+2. Upload CSV files from `sample_data_3yr/` directory:
+   - `Customers.csv`
+   - `Orders.csv`
+   - `OrderLines.csv`
+   - `Products.csv`
+
+**Via API:**
 ```bash
-cd phase1-app/backend
-npm install
-npm start
-```
-Wait for: `Server running on port 5002`
+# Upload Customers
+curl -X POST http://localhost:5002/api/upload/customers \
+  -F "file=@sample_data_3yr/Customers.csv"
 
-### Terminal 2 - Start Frontend:
+# Expected Response:
+# {"status":"success","message":"Uploaded 120 customers"}
+```
+
+### 1.2 View CAGR Analysis
+
+**Via UI:**
+- Navigate to CEO Dashboard → View "Customer Growth Analysis" section
+
+**Via API:**
 ```bash
-cd phase1-app/frontend
-npm install
-npm run dev
+curl -s http://localhost:5002/api/analytics/cagr-summary | jq .
+
+# Expected Response:
+{
+  "growing": 32,
+  "stable": 45,
+  "declining": 19,
+  "noData": 24
+}
 ```
-Wait for: `ready - started server on 0.0.0.0:3000`
-
-### Open Browser:
-Go to: **http://localhost:3000**
 
 ---
 
-## 📋 Step 1: Login (First Screen)
+## 2. ICP Dashboard Testing
 
-### What You'll See:
-- Login page with email and password fields
-- "Sign In" button
-- Strikezone logo
+### 2.1 Generate ICP Profile from Top 20 Customers
 
-### What to Do:
-1. **Email:** Enter `admin@strikezone.io`
-2. **Password:** Enter `admin123`
-3. **Click:** "Sign In" button
+**Via API:**
+```bash
+curl -s http://localhost:5002/api/icp/profile | jq .
 
-### Expected Result:
-- ✅ Redirected to Home page (Upload page)
-- ✅ Header shows "Admin" user logged in
+# Expected Response (sample):
+{
+  "industries": [
+    { "value": "Industrial Machinery", "count": 6, "weight": 0.25 },
+    { "value": "Petroleum & Coal", "count": 5, "weight": 0.21 }
+  ],
+  "states": [
+    { "value": "TX", "count": 3, "weight": 0.125 },
+    { "value": "CA", "count": 2, "weight": 0.083 }
+  ],
+  "employeeCount": { "p25": 378, "p75": 881 },
+  "annualRevenue": { "p25": 72460000, "p75": 193647500 }
+}
+```
 
----
+### 2.2 Get Top 20 Customers
 
-## 📤 Step 2: Upload Data (Home Page - Upload Page)
+```bash
+curl -s http://localhost:5002/api/icp/top20 | jq '.customers | length'
 
-### What You'll See:
-- Drag & drop upload area
-- Buttons for each file type (Customers, Products, Orders, OrderLines)
-- File selection area
-
-### What to Do (Upload in this order):
-
-#### 2.1 Upload Customers
-1. **Click:** "Customers" tab/button
-2. **Click:** "Browse" or drag `sample_data_3yr/Customers.csv` into the drop zone
-3. **Click:** "Upload" button
-4. **Wait:** See progress bar and results
-
-#### Expected Result:
-- ✅ "120 rows inserted" message
-- ✅ QA Summary showing validation results
-- ✅ Green success notification
-
-#### 2.2 Upload Products
-1. **Click:** "Products" tab/button
-2. **Browse/Drag:** `sample_data_3yr/Products.csv`
-3. **Click:** "Upload"
-
-#### Expected Result:
-- ✅ "10 rows inserted" message
-
-#### 2.3 Upload Orders
-1. **Click:** "Orders" tab/button
-2. **Browse/Drag:** `sample_data_3yr/Orders.csv`
-3. **Click:** "Upload"
-
-#### Expected Result:
-- ✅ "2837 rows inserted" message
-
-#### 2.4 Upload OrderLines
-1. **Click:** "OrderLines" tab/button
-2. **Browse/Drag:** `sample_data_3yr/OrderLines.csv`
-3. **Click:** "Upload"
-
-#### Expected Result:
-- ✅ "8531 rows inserted" message
+# Expected Response: 20
+```
 
 ---
 
-## 📊 Step 3: Calculate Customer Metrics (CEO Dashboard)
+## 3. Approval Portal Testing
 
-### Navigate:
-- **Click:** "CEO Dashboard" in the header navigation
+### 3.1 List Targets
 
-### What You'll See:
-- CEO Dashboard page
-- "Calculate Customer Metrics" button
-- Empty tables/charts
+```bash
+curl -s "http://localhost:5002/api/targets?limit=5" | jq '.targets | .[] | {id: .target_id, name: .company_name, status: .status}'
 
-### What to Do:
-1. **Find:** "Session" section at top
-2. **Actor field:** Leave as "local-dev" or enter your name
-3. **Click:** "Calculate Customer Metrics" button
-4. **Wait:** Processing indicator
+# Expected Response:
+# { "id": 1, "name": "Demo Industrial Co", "status": "approved" }
+# { "id": 2, "name": "PBI Export Example Inc", "status": "approved" }
+# ...
+```
 
-### Expected Result:
-- ✅ Success toast: "Metrics calculated for 120 customers, inserted/updated: 120"
-- ✅ KPIs appear:
-  - Total customers: 120
-  - Top 20 customers: 24
-  - Total Revenue: ~$22.8M
-  - Avg Gross Margin %: ~32%
+### 3.2 Create a New Target
 
----
+```bash
+curl -s -X POST http://localhost:5002/api/targets \
+  -H "Content-Type: application/json" \
+  -H "X-Actor: test-user" \
+  -d '{
+    "company_name": "Test Manufacturing Corp",
+    "domain": "testmfg.com",
+    "industry": "Manufacturing",
+    "state": "TX",
+    "employee_count": 500,
+    "annual_revenue": 50000000
+  }' | jq '.target | {id: .target_id, name: .company_name, tier: .tier}'
 
-## 📈 Step 4: Calculate 3-Year CAGR (CEO Dashboard)
+# Expected Response:
+# { "id": 35, "name": "Test Manufacturing Corp", "tier": "B" }
+```
 
-### What to Do:
-1. **Stay on:** CEO Dashboard
-2. **Find:** "Calculate 3-Year CAGR" button
-3. **Click:** The button
-4. **Wait:** Processing
+### 3.3 Approve a Target
 
-### Expected Result:
-- ✅ Success toast: "CAGR calculated for X customers"
-- ✅ CAGR Summary section shows:
-  - Average CAGR percentage
-  - Consistent growers count
-  - Customers with 3-year data
+```bash
+# Approve target ID 35
+curl -s -X POST http://localhost:5002/api/targets/35/approve \
+  -H "Content-Type: application/json" \
+  -H "X-Actor: test-user" \
+  -d '{"action": "approved", "notes": "Good fit for our ICP"}' | jq '.target.status'
 
----
+# Expected Response: "approved"
+```
 
-## 🔄 Step 5: View Top 20% vs Others Comparison (CEO Dashboard)
+### 3.4 Update a Target
 
-### What to Do:
-1. **Stay on:** CEO Dashboard
-2. **Scroll down** to see the comparison section
+```bash
+curl -s -X PATCH http://localhost:5002/api/targets/35 \
+  -H "Content-Type: application/json" \
+  -H "X-Actor: test-user" \
+  -d '{"tier": "A", "notes": "High priority prospect"}' | jq '.target.tier'
 
-### What You'll See:
-- Side-by-side table: "Top 20% vs Others"
-- Metrics comparison:
-  - Average Order Value
-  - Orders per Customer
-  - Gross Margin %
-  - Product Categories per Customer
-- Lift percentages (how much better Top 20% performs)
+# Expected Response: "A"
+```
 
-### Expected Result:
-- ✅ Top 20% should show higher values
-- ✅ Lift percentages should be positive (e.g., "+45%")
+### 3.5 Export Targets as CSV
 
----
+```bash
+curl -s "http://localhost:5002/api/targets/export.csv?status=approved" | head -5
 
-## 🎯 Step 6: View ICP Traits (ICP Dashboard)
-
-### Navigate:
-- **Click:** "ICP Dashboard" in the header
-
-### What You'll See:
-- ICP Dashboard page
-- "Recalculate ICP Traits" button
-- Empty trait tables
-
-### What to Do:
-1. **Click:** "Recalculate ICP Traits" button
-2. **Wait:** Processing
-
-### Expected Result:
-- ✅ Success toast: "ICP traits recalculated"
-- ✅ Tables populate with:
-  - **Top Industries:** Industrial Machinery, Chemicals, etc. with lift scores
-  - **Top States:** OH, IL, TX, etc. with frequency %
-  - **Top NAICS:** 333, 325, 336 with importance scores
-  - **External Filters:** JSON object ready for Apollo
-
-### Additional Features to Test:
-1. **Click:** "Download Traits CSV" → Downloads CSV file
-2. **Click:** "Download ICP Summary (MD)" → Downloads Markdown file
+# Expected Response (CSV format):
+# target_id,company_name,domain,industry,...
+# 1,Demo Industrial Co,demo-industrial.example,Industrial Machinery,...
+```
 
 ---
 
-## 🏢 Step 7: Generate Lookalike Targets (Approval Portal)
+## 4. Messaging Portal Testing
 
-### Navigate:
-- **Click:** "Approval Portal" in the header
+### 4.1 Check OpenAI Configuration
 
-### What You'll See:
-- Target Approval Portal
-- Multiple generation options
-- Empty targets table
+```bash
+curl -s http://localhost:5002/api/messaging/status | jq .
 
-### What to Do:
+# Expected Response:
+{
+  "openai": {
+    "configured": true,
+    "model": "gpt-4-turbo-preview"
+  }
+}
+```
 
-#### 7.1 Generate from Apollo
-1. **Find:** "Generate (Apollo)" section
-2. **Search query field:** Enter "industrial machinery"
-3. **Click:** "Generate from Apollo" button
-4. **Wait:** API call (may take 10-30 seconds)
+### 4.2 List Enriched Contacts
 
-#### Expected Result:
-- ✅ Success toast: "Apollo generation complete. Inserted: X, Updated: Y"
-- ✅ New targets appear in the table below
-- ⚠️ If error: "Free plan limits" or API issues - this is normal for free Apollo accounts
+```bash
+curl -s http://localhost:5002/api/enrichment/contacts | jq '.contacts | .[] | {id: .id, name: .full_name, company: .company_name, title: .title}'
 
-#### 7.2 Generate Win-back Targets
-1. **Find:** "Generate (Win-back)" section
-2. **Inactive Days:** Leave as 180 (or change)
-3. **Limit:** Leave as 200 (or change)
-4. **Click:** "Generate Win-back Targets" button
+# Expected Response:
+# { "id": 1, "name": "John Smith", "company": "Demo Industrial Co", "title": "VP of Operations" }
+# { "id": 2, "name": "Sarah Johnson", "company": "Demo Industrial Co", "title": "Director of Procurement" }
+# ...
+```
 
-#### Expected Result:
-- ✅ Success toast: "Win-back generation complete"
-- ✅ Targets with source "winback" appear in table
+### 4.3 Generate AI Message for Single Contact
 
----
+```bash
+curl -s -X POST http://localhost:5002/api/messaging/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "contactId": 1,
+    "messageType": "email",
+    "customInstructions": "Focus on supply chain efficiency"
+  }' | jq '{id: .message.id, subject: .message.subject, status: .message.approval_status}'
 
-## ✅ Step 8: Review and Approve Targets (Approval Portal)
+# Expected Response:
+# { "id": 9, "subject": "Improving Supply Chain Operations at Demo Industrial Co", "status": "pending" }
+```
 
-### What You'll See:
-- Table with targets showing:
-  - Company name, Industry, State
-  - Employee count, Revenue
-  - Tier (A/B/C), Segment
-  - Similarity Score, Opportunity Score
-  - Status, Actions
+### 4.4 Generate Batch Messages
 
-### What to Do:
+```bash
+curl -s -X POST http://localhost:5002/api/messaging/generate/batch \
+  -H "Content-Type: application/json" \
+  -d '{
+    "contactIds": [1, 2, 3],
+    "messageType": "email"
+  }' | jq '{generated: .generatedCount, failed: .failedCount}'
 
-#### 8.1 Filter Targets
-1. **Status dropdown:** Select "Pending Review"
-2. **Tier dropdown:** Select "A" (top tier only)
-3. **Click:** "Refresh"
+# Expected Response:
+# { "generated": 3, "failed": 0 }
+```
 
-#### 8.2 Edit a Target
-1. **Find:** Any row in the table
-2. **Tier dropdown in row:** Change from "C" to "A"
-3. **Notes field:** Type "High priority target"
-4. **Click:** "Save" button in that row
+### 4.5 List Pending Messages
 
-#### Expected Result:
-- ✅ Row updates with new tier
-- ✅ Notes saved
+```bash
+curl -s "http://localhost:5002/api/messaging/messages?status=pending" | jq '.messages | length'
 
-#### 8.3 Approve a Target
-1. **Find:** Any row
-2. **Click:** "Approve" button (green)
+# Expected Response: 3 (or more depending on previous tests)
+```
 
-#### Expected Result:
-- ✅ Status changes to "approved"
-- ✅ Target moves out of "Pending Review" filter
+### 4.6 Approve a Single Message
 
-#### 8.4 Reject a Target
-1. **Find:** Any row
-2. **Click:** "Reject" button (red)
+```bash
+curl -s -X POST http://localhost:5002/api/messaging/messages/9/approve | jq '.message.approval_status'
 
-#### Expected Result:
-- ✅ Status changes to "rejected"
+# Expected Response: "approved"
+```
 
----
+### 4.7 Bulk Approve Messages
 
-## 📥 Step 9: Export Approved Targets (Approval Portal)
+```bash
+curl -s -X POST http://localhost:5002/api/messaging/messages/bulk/approve \
+  -H "Content-Type: application/json" \
+  -d '{"ids": [10, 11, 12]}' | jq .
 
-### What to Do:
-1. **Status dropdown:** Select "Approved"
-2. **Click:** "Refresh" to show only approved
-3. **Click:** "Export CSV" button
+# Expected Response:
+# { "approved": 3, "ids": [10, 11, 12] }
+```
 
-### Expected Result:
-- ✅ CSV file downloads
-- ✅ Contains approved targets with all fields
+### 4.8 Edit and Approve a Message
 
----
+```bash
+curl -s -X POST http://localhost:5002/api/messaging/messages/9/edit \
+  -H "Content-Type: application/json" \
+  -d '{
+    "subject": "Custom Subject Line",
+    "body": "Dear John,\n\nThis is an edited message body.\n\nBest regards"
+  }' | jq '.message | {status: .approval_status, subject: .subject}'
 
-## 📨 Step 10: Test Messaging Portal (Optional - Phase 4)
+# Expected Response:
+# { "status": "edited", "subject": "Custom Subject Line" }
+```
 
-### Navigate:
-- **Click:** "Messaging Portal" in the header
+### 4.9 Reject a Message
 
-### What You'll See:
-- Messaging generation interface
-- Requires OpenAI API key to be configured
+```bash
+curl -s -X POST http://localhost:5002/api/messaging/messages/9/reject \
+  -H "Content-Type: application/json" \
+  -d '{"reason": "Not the right tone for this prospect"}' | jq '.message.approval_status'
 
-### What to Do:
-1. **Select target(s)** from the list
-2. **Click:** "Generate Messages"
-3. **Review** generated email/LinkedIn messages
-4. **Approve** messages for outreach
+# Expected Response: "rejected"
+```
 
-### Expected Result:
-- ✅ AI-generated personalized messages
-- ✅ Multiple variants (Email 1, Email 2, LinkedIn DM)
+### 4.10 Get Message Statistics
 
----
+```bash
+curl -s http://localhost:5002/api/messaging/messages/stats | jq '.stats'
 
-## 🔍 Quick Test Checklist
+# Expected Response:
+{
+  "total": "15",
+  "pending": "2",
+  "approved": "10",
+  "rejected": "1",
+  "edited": "2"
+}
+```
 
-| Step | Page | Action | Expected |
-|------|------|--------|----------|
-| 1 | Login | Login with admin@strikezone.io | ✅ Redirected to home |
-| 2 | Upload | Upload 4 CSV files | ✅ All files processed |
-| 3 | CEO Dashboard | Calculate Metrics | ✅ 120 customers, 24 top 20% |
-| 4 | CEO Dashboard | Calculate CAGR | ✅ CAGR values populated |
-| 5 | CEO Dashboard | View Comparison | ✅ Top 20% vs Others shown |
-| 6 | ICP Dashboard | Recalculate Traits | ✅ Industry/State/NAICS traits |
-| 7 | Approval Portal | Generate Apollo | ✅ Targets created |
-| 8 | Approval Portal | Generate Win-back | ✅ Win-back targets |
-| 9 | Approval Portal | Approve/Reject | ✅ Status changes |
-| 10 | Approval Portal | Export CSV | ✅ File downloads |
+### 4.11 Export Approved Messages
 
----
+```bash
+curl -s "http://localhost:5002/api/messaging/export" | head -3
 
-## ❓ Troubleshooting
-
-### Login doesn't work?
-- Make sure backend is running on port 5002
-- Check browser console for errors
-- Verify auth_schema.sql was run
-
-### Upload fails?
-- Check CSV format matches expected columns
-- Look at browser console for error details
-- Verify database connection in backend
-
-### Apollo generation fails?
-- Check APOLLO_API_KEY in backend/.env
-- Free Apollo accounts have limited API access
-- Try smaller queries
-
-### No metrics after Calculate?
-- Make sure all 4 CSVs were uploaded
-- Check that Orders have valid customer_ids
-- Look at backend console for errors
+# Expected Response (CSV format):
+# "Contact Name","Email","Company","Subject","Body","Type","Approved At"
+# "John Smith","john.smith@demo-industrial.example","Demo Industrial Co","..."
+```
 
 ---
 
-## 📞 Support
+## 5. Lookalike Generation Testing
 
-If you encounter issues not covered here, check:
-1. Backend terminal for error logs
-2. Browser Developer Tools (F12) → Console
-3. Browser Developer Tools (F12) → Network tab
+### 5.1 Generate Lookalikes (Demo Mode)
+
+```bash
+curl -s -X POST http://localhost:5002/api/lookalike/generate \
+  -H "Content-Type: application/json" \
+  -d '{"q": "industrial manufacturing", "perPage": 5}' | jq '{status: .status, inserted: .inserted, provider: .provider}'
+
+# Expected Response (demo mode if Apollo not configured):
+# { "status": "success", "inserted": 5, "provider": "demo" }
+```
+
+### 5.2 Generate Win-back Targets
+
+```bash
+curl -s -X POST http://localhost:5002/api/winback/generate \
+  -H "Content-Type: application/json" \
+  -d '{"inactiveDays": 180, "limit": 10}' | jq '{inserted: .inserted, updated: .updated, candidates: .totalCandidates}'
+
+# Expected Response:
+# { "inserted": 6, "updated": 0, "candidates": 10 }
+```
+
+---
+
+## 6. Enrichment Testing
+
+### 6.1 Run Contact Enrichment
+
+```bash
+curl -s -X POST http://localhost:5002/api/enrichment/run \
+  -H "Content-Type: application/json" \
+  -d '{"maxContactsPerCompany": 3}' | jq .
+
+# Expected Response:
+{
+  "runId": 3,
+  "enrichedCount": 6,
+  "failedCount": 2,
+  "companiesProcessed": 3
+}
+```
+
+### 6.2 List Enrichment Runs
+
+```bash
+curl -s http://localhost:5002/api/enrichment/runs | jq '.runs | .[] | {id: .id, status: .status, enriched: .enriched_count}'
+
+# Expected Response:
+# { "id": 3, "status": "completed", "enriched": 6 }
+# { "id": 2, "status": "completed", "enriched": 8 }
+```
+
+### 6.3 Export Enriched Contacts
+
+```bash
+curl -s "http://localhost:5002/api/enrichment/contacts/export" | head -3
+
+# Expected Response (CSV format):
+# "Full Name","Email","Title","Company","Domain","Phone","LinkedIn"
+# "John Smith","john.smith@demo-industrial.example","VP of Operations",...
+```
+
+---
+
+## 7. Power BI Import Testing
+
+### 7.1 Import via JSON
+
+```bash
+curl -s -X POST http://localhost:5002/api/powerbi/import/targets \
+  -H "Content-Type: application/json" \
+  -d '{
+    "records": [
+      {
+        "account_id": "PBI-TEST-001",
+        "company_name": "Power BI Test Company",
+        "domain": "pbitest.com",
+        "tier": "A",
+        "segment": "Strategic",
+        "similarity_score": "95.5",
+        "opportunity_score": "88.0"
+      }
+    ]
+  }' | jq .
+
+# Expected Response:
+# { "totalRecords": 1, "inserted": 1, "updated": 0, "failed": 0 }
+```
+
+### 7.2 Import via CSV File
+
+```bash
+# Create test CSV
+echo 'account_id,company_name,domain,tier,segment
+PBI-CSV-001,CSV Test Corp,csvtest.com,B,Growth' > /tmp/test_pbi.csv
+
+curl -s -X POST http://localhost:5002/api/powerbi/import/targets-csv \
+  -F "file=@/tmp/test_pbi.csv" | jq .
+
+# Expected Response:
+# { "totalRows": 1, "inserted": 1, "updated": 0, "failed": 0 }
+```
+
+---
+
+## 8. Health Check
+
+```bash
+curl -s http://localhost:5002/api/health | jq .
+
+# Expected Response:
+{
+  "status": "ok",
+  "timestamp": "2026-03-01T01:05:00.000Z",
+  "database": "connected"
+}
+```
+
+---
+
+## Quick Full Workflow Test
+
+Run this complete workflow test:
+
+```bash
+echo "=== 1. Check Health ==="
+curl -s http://localhost:5002/api/health | jq -c .
+
+echo -e "\n=== 2. Get ICP Profile ==="
+curl -s http://localhost:5002/api/icp/profile | jq -c '{industries: .industries | length, states: .states | length}'
+
+echo -e "\n=== 3. List Targets ==="
+curl -s "http://localhost:5002/api/targets?limit=3" | jq -c '.targets | length'
+
+echo -e "\n=== 4. List Contacts ==="
+curl -s http://localhost:5002/api/enrichment/contacts | jq -c '.contacts | length'
+
+echo -e "\n=== 5. Message Stats ==="
+curl -s http://localhost:5002/api/messaging/messages/stats | jq -c '.stats'
+
+echo -e "\n=== All Tests Complete ==="
+```
+
+Expected output:
+```
+=== 1. Check Health ===
+{"status":"ok","timestamp":"...","database":"connected"}
+
+=== 2. Get ICP Profile ===
+{"industries":6,"states":10}
+
+=== 3. List Targets ===
+3
+
+=== 4. List Contacts ===
+8
+
+=== 5. Message Stats ===
+{"total":"15","pending":"0","approved":"13","rejected":"1","edited":"1"}
+
+=== All Tests Complete ===
+```
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+1. **500 Error on API calls**
+   - Check backend logs: `tail -f /tmp/backend.log`
+   - Verify database connection: `PGPASSWORD=postgres psql -h localhost -U postgres -d strikezone_db -c "SELECT 1;"`
+
+2. **No contacts available**
+   - Run enrichment: `curl -X POST http://localhost:5002/api/enrichment/run -H "Content-Type: application/json" -d '{"maxContactsPerCompany": 5}'`
+
+3. **No targets found**
+   - Generate lookalikes: `curl -X POST http://localhost:5002/api/lookalike/generate -H "Content-Type: application/json" -d '{"q": "manufacturing"}'`
+
+4. **OpenAI not configured**
+   - Set `OPENAI_API_KEY` in `backend/.env`
+   - Restart backend
+
+5. **Apollo API errors**
+   - Set `APOLLO_API_KEY` in `backend/.env` 
+   - Or use demo mode (enabled by default)
