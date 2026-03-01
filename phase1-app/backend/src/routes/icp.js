@@ -1,7 +1,7 @@
 const express = require('express');
 const icpTraitsService = require('../services/icpTraitsService');
 const icpProfileService = require('../services/icpProfileService');
-const { optionalAuth } = require('../middleware/auth');
+const { optionalAuth, getUserIdFilter } = require('../middleware/auth');
 
 const router = express.Router();
 
