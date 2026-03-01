@@ -65,16 +65,31 @@ router.post('/generate', async (req, res) => {
     // Support legacy 'q' param by adding to filters
     if (q && !filters.q) filters.q = q;
 
-    const result = await lookalikeGenerationService.generate(
-      {
-        provider,
-        filters,
-        page: parseInt(page, 10) || 1,
-        perPage: Math.min(parseInt(perPage, 10) || 25, 100),
-        useIntent,
-      },
-      actor
-    );
+    let result;
+    try {
+      result = await lookalikeGenerationService.generate(
+        {
+          provider,
+          filters,
+          page: parseInt(page, 10) || 1,
+          perPage: Math.min(parseInt(perPage, 10) || 25, 100),
+          useIntent,
+        },
+        actor
+      );
+    } catch (apiErr) {
+      // If API fails (402 payment required, etc), fall back to demo mode
+      if (apiErr.statusCode === 402 || apiErr.message?.includes('free plan')) {
+        console.log('API plan limit - falling back to demo mode');
+        result = await lookalikeGenerationService.generateDemoData(
+          { page: parseInt(page, 10) || 1, perPage: Math.min(parseInt(perPage, 10) || 25, 100) },
+          actor
+        );
+        result.fallbackReason = 'API requires paid plan - using demo data';
+      } else {
+        throw apiErr;
+      }
+    }
 
     res.json({ status: 'success', ...result });
   } catch (err) {

@@ -58,8 +58,9 @@ class LookalikeGenerationService {
   async generate({ provider, filters = {}, page = 1, perPage = 25, useIntent = false }, actor) {
     const selectedProvider = provider || this.getDefaultProvider();
     
-    if (!selectedProvider) {
-      throw new Error('No lookalike provider configured. Set ZOOMINFO_API_KEY, SIXSENSE_API_KEY, or APOLLO_API_KEY');
+    // If no provider configured, use demo mode
+    if (!selectedProvider || provider === 'demo') {
+      return this.generateDemoData({ page, perPage }, actor);
     }
 
     // Get seed companies (Top 20 customers)
@@ -78,6 +79,77 @@ class LookalikeGenerationService {
       default:
         return this.generateFromApollo({ q: filters.q, page, perPage }, actor);
     }
+  }
+
+  /**
+   * Generate demo/mock lookalike data for testing without API keys
+   */
+  async generateDemoData({ page = 1, perPage = 25 }, actor) {
+    const icp = await icpProfileService.getTop20Profile();
+    
+    // Get industry distribution from ICP
+    const topIndustries = icp.industries?.slice(0, 5).map(i => i.value) || [
+      'Industrial Machinery', 'Chemical Manufacturing', 'Petroleum & Coal', 'Transportation Equipment', 'Paper Products'
+    ];
+    const topStates = icp.states?.slice(0, 5).map(s => s.value) || ['TX', 'CA', 'IL', 'OH', 'GA'];
+    
+    // Sample company name prefixes
+    const prefixes = ['Apex', 'Pinnacle', 'Summit', 'Horizon', 'Global', 'United', 'Premier', 'Elite', 'Dynamic', 'Strategic'];
+    const suffixes = ['Industries', 'Manufacturing', 'Solutions', 'Corp', 'Group', 'Holdings', 'Systems', 'Technologies', 'Partners', 'Enterprises'];
+    
+    let inserted = 0;
+    const demoCompanies = [];
+    
+    for (let i = 0; i < perPage; i++) {
+      const idx = (page - 1) * perPage + i;
+      const prefix = prefixes[idx % prefixes.length];
+      const suffix = suffixes[Math.floor(idx / prefixes.length) % suffixes.length];
+      const industry = topIndustries[idx % topIndustries.length];
+      const state = topStates[idx % topStates.length];
+      
+      const company = {
+        company_name: `${prefix} ${suffix} ${idx + 1}`,
+        domain: `${prefix.toLowerCase()}${suffix.toLowerCase()}${idx + 1}.com`,
+        industry,
+        city: ['Houston', 'Los Angeles', 'Chicago', 'Columbus', 'Atlanta'][idx % 5],
+        state,
+        country: 'USA',
+        employee_count: Math.floor(50 + Math.random() * 450), // 50-500 employees
+        annual_revenue: Math.floor(10000000 + Math.random() * 90000000), // $10M-$100M
+        source: 'demo',
+        source_external_id: `DEMO-${idx + 1}`,
+      };
+      
+      const score = scoringService.scoreTarget({ target: company, icpProfile: icp });
+      
+      const result = await this.upsertLookalikeTarget({
+        ...company,
+        similarity_score: score.similarityScore,
+        opportunity_score: score.opportunityScore,
+        tier: score.tier,
+        reason_codes: [...score.reasonCodes, 'DEMO_DATA'],
+      });
+      
+      if (result.inserted) inserted++;
+      demoCompanies.push({ ...company, ...score });
+    }
+    
+    await auditLogService.log({
+      actor,
+      action: 'lookalike.generate.demo',
+      entityType: 'lookalike_targets',
+      details: { page, perPage, inserted, note: 'Demo mode - no API key configured' },
+    });
+    
+    return {
+      provider: 'demo',
+      inserted,
+      updated: perPage - inserted,
+      totalFetched: perPage,
+      pagination: { page, perPage, totalResults: 100 },
+      companies: demoCompanies,
+      note: 'Demo mode - configure APOLLO_API_KEY, ZOOMINFO_API_KEY, or SIXSENSE_API_KEY for real data',
+    };
   }
 
   /**

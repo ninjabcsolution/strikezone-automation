@@ -70,6 +70,7 @@ class ApolloService {
   }
 
   // Phase 4A: People API Search - find contacts at a company
+  // Updated to use new api_search endpoint: https://docs.apollo.io/reference/people-api-search
   async searchPeople({ page = 1, perPage = 10, organizationDomains = [], titles = [], seniorities = [] }, actor) {
     const apiKey = this.getApiKey();
     if (!apiKey) {
@@ -78,14 +79,14 @@ class ApolloService {
       throw err;
     }
 
-    const url = 'https://api.apollo.io/v1/mixed_people/search';
+    const url = 'https://api.apollo.io/api/v1/mixed_people/search';
 
     const body = {
       page,
       per_page: perPage,
       person_titles: titles.length ? titles : undefined,
       person_seniorities: seniorities.length ? seniorities : undefined,
-      q_organization_domains: organizationDomains.length ? organizationDomains.join('\n') : undefined,
+      organization_domains: organizationDomains.length ? organizationDomains : undefined,
     };
 
     const resp = await fetch(url, {

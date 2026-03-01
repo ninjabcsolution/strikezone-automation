@@ -575,6 +575,9 @@ function TargetRow({ target, onUpdate, onApprove }) {
     setSaving(true);
     try {
       await onUpdate({ tier, notes });
+      toast.success(`Target #${target.target_id} saved!`);
+    } catch (err) {
+      toast.error(`Failed to save: ${err.message}`);
     } finally {
       setSaving(false);
     }
@@ -584,6 +587,9 @@ function TargetRow({ target, onUpdate, onApprove }) {
     setApproving(true);
     try {
       await onApprove(action);
+      toast.success(`Target #${target.target_id} ${action}!`);
+    } catch (err) {
+      toast.error(`Failed to ${action}: ${err.message}`);
     } finally {
       setApproving(false);
     }

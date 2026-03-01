@@ -45,22 +45,22 @@ router.post('/enrich-person', async (req, res) => {
   }
 });
 
-// POST /api/enrichment/run - Start an enrichment run for approved lookalike companies
+// POST /api/enrichment/run - Start an enrichment run for approved lookalike targets
 router.post('/run', async (req, res) => {
   const client = await pool.connect();
   try {
-    const { companyIds, titles = [], seniorities = [], maxContactsPerCompany = 5 } = req.body;
+    const { targetIds, titles = [], seniorities = [], maxContactsPerCompany = 5 } = req.body;
 
-    // Get approved lookalike companies with domains
+    // Get approved lookalike targets with domains
     let companiesQuery = `
-      SELECT lc.id, lc.company_name, lc.domain
-      FROM lookalike_companies lc
-      WHERE lc.approval_status = 'approved' AND lc.domain IS NOT NULL
+      SELECT lt.target_id as id, lt.company_name, lt.domain
+      FROM lookalike_targets lt
+      WHERE lt.status = 'approved' AND lt.domain IS NOT NULL
     `;
     const params = [];
-    if (companyIds && companyIds.length) {
-      companiesQuery += ` AND lc.id = ANY($1)`;
-      params.push(companyIds);
+    if (targetIds && targetIds.length) {
+      companiesQuery += ` AND lt.target_id = ANY($1)`;
+      params.push(targetIds);
     }
     companiesQuery += ' LIMIT 100';
 
@@ -68,7 +68,7 @@ router.post('/run', async (req, res) => {
     const companies = companiesRes.rows;
 
     if (!companies.length) {
-      return res.status(400).json({ error: 'No approved companies with domains found' });
+      return res.status(400).json({ error: 'No approved targets with domains found. Approve some targets first in the Approval Portal.' });
     }
 
     // Create enrichment run
@@ -97,7 +97,7 @@ router.post('/run', async (req, res) => {
         for (const person of people) {
           await client.query(
             `INSERT INTO enriched_contacts (
-              enrichment_run_id, lookalike_company_id, apollo_id,
+              enrichment_run_id, target_id, apollo_id,
               first_name, last_name, full_name, email, email_status,
               title, seniority, departments, linkedin_url, phone,
               company_name, company_domain, raw_data
@@ -160,7 +160,7 @@ router.get('/runs', async (req, res) => {
 // GET /api/enrichment/contacts - List enriched contacts
 router.get('/contacts', async (req, res) => {
   try {
-    const { runId, companyId, limit = 100, offset = 0 } = req.query;
+    const { runId, companyId, targetId, limit = 100, offset = 0 } = req.query;
 
     let query = `SELECT * FROM enriched_contacts WHERE 1=1`;
     const params = [];
@@ -170,9 +170,9 @@ router.get('/contacts', async (req, res) => {
       query += ` AND enrichment_run_id = $${paramIndex++}`;
       params.push(runId);
     }
-    if (companyId) {
-      query += ` AND lookalike_company_id = $${paramIndex++}`;
-      params.push(companyId);
+    if (companyId || targetId) {
+      query += ` AND target_id = $${paramIndex++}`;
+      params.push(companyId || targetId);
     }
 
     query += ` ORDER BY created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
@@ -189,11 +189,11 @@ router.get('/contacts', async (req, res) => {
 // GET /api/enrichment/contacts/export - Export enriched contacts as CSV
 router.get('/contacts/export', async (req, res) => {
   try {
-    const { runId, companyId } = req.query;
+    const { runId, companyId, targetId } = req.query;
 
-    let query = `SELECT ec.*, lc.company_name as target_company
+    let query = `SELECT ec.*, lt.company_name as target_company
       FROM enriched_contacts ec
-      LEFT JOIN lookalike_companies lc ON ec.lookalike_company_id = lc.id
+      LEFT JOIN lookalike_targets lt ON ec.target_id = lt.target_id
       WHERE 1=1`;
     const params = [];
     let paramIndex = 1;
@@ -202,9 +202,9 @@ router.get('/contacts/export', async (req, res) => {
       query += ` AND ec.enrichment_run_id = $${paramIndex++}`;
       params.push(runId);
     }
-    if (companyId) {
-      query += ` AND ec.lookalike_company_id = $${paramIndex++}`;
-      params.push(companyId);
+    if (companyId || targetId) {
+      query += ` AND ec.target_id = $${paramIndex++}`;
+      params.push(companyId || targetId);
     }
     query += ` ORDER BY ec.created_at DESC`;
 
