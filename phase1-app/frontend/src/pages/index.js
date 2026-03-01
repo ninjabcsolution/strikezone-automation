@@ -7,7 +7,7 @@ import {
 } from 'react-icons/hi';
 import Layout from '../components/Layout';
 
-import { getApiUrl } from '../utils/api';
+import { getApiUrl, authFetch, getAuthHeaders, getAuthToken } from '../utils/api';
 
 const FILE_TYPES = [
   { key: 'customers', label: 'Customers.csv', description: 'Customer master data', order: 1 },
@@ -30,11 +30,8 @@ export default function Home() {
   useEffect(() => {
     const fetchUploadStatus = async () => {
       try {
-        const token = localStorage.getItem('strikezone_token');
         const API_URL = getApiUrl();
-        const response = await fetch(`${API_URL}/api/upload/status`, {
-          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-        });
+        const response = await authFetch(`${API_URL}/api/upload/status`);
         const data = await response.json();
         
         if (response.ok && data.status) {
@@ -91,11 +88,10 @@ export default function Home() {
     formData.append('file', file);
 
     try {
-      const token = localStorage.getItem('strikezone_token');
       const API_URL = getApiUrl();
-      const response = await fetch(`${API_URL}/api/upload`, {
+      // Use authFetch which automatically adds auth headers
+      const response = await authFetch(`${API_URL}/api/upload`, {
         method: 'POST',
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
         body: formData,
       });
       
@@ -144,11 +140,9 @@ export default function Home() {
   const handleCalculateMetrics = async () => {
     setCalculating(true);
     try {
-      const token = localStorage.getItem('strikezone_token');
       const API_URL = getApiUrl();
-      const response = await fetch(`${API_URL}/api/analytics/calculate`, {
+      const response = await authFetch(`${API_URL}/api/analytics/calculate`, {
         method: 'POST',
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
       });
       const data = await response.json();
       toast.success(`Top 20% customers contribute ${data.stats.top20Contribution}% of gross margin!`);

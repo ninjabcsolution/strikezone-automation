@@ -9,7 +9,8 @@
     "db:init": "node src/scripts/initDb.js",
     "db:init:all": "node src/scripts/initDb.js --all",
     "db:init:phase2": "node src/scripts/initDb.js --phase2-only",
-    "db:init:phase3": "node src/scripts/initDb.js --phase3-only"
+    "db:init:phase3": "node src/scripts/initDb.js --phase3-only",
+    "db:migrate:user-isolation": "node src/scripts/migrateUserIsolation.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

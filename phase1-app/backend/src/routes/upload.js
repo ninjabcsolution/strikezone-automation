@@ -7,6 +7,7 @@ const csvParser = require('../services/csvParser');
 const validator = require('../services/validator');
 const ingestionService = require('../services/ingestion');
 const { pool } = require('../config/database');
+const { optionalAuth, getUserIdFilter } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -16,8 +17,6 @@ const storage = multer.diskStorage({
     if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
     cb(null, uploadDir);
   },
-  // Never trust `originalname` for filesystem paths (it can contain path separators)
-  // Generate a safe filename and keep the original name only for display/logging.
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname || '').toLowerCase();
     const safeExt = ext === '.csv' ? '.csv' : '';
@@ -42,12 +41,17 @@ const upload = multer({
   limits: { fileSize: 50 * 1024 * 1024 },
 });
 
+// Apply optional auth to all routes - user_id will be used if available
+router.use(optionalAuth);
+
 router.post('/', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
     const filePath = req.file.path;
     const fileName = req.file.originalname;
+    const userId = req.userId || null; // Get user ID from auth middleware
+    
     const records = await csvParser.parseCSV(filePath);
     
     if (records.length === 0) {
@@ -75,20 +79,29 @@ router.post('/', upload.single('file'), async (req, res) => {
     const qaReport = validator.generateQAReport(records, fileType);
 
     if (!validationResult.valid) {
-      await ingestionService.logIngestion(fileType, fileName, validationResult.totalRows, 0, validationResult.errorRows, validationResult.errors, 'validation_failed');
+      await ingestionService.logIngestion(fileType, fileName, validationResult.totalRows, 0, validationResult.errorRows, validationResult.errors, 'validation_failed', userId);
       fs.unlinkSync(filePath);
       return res.status(400).json({ status: 'validation_failed', fileType, validation: validationResult, qaReport });
     }
 
+    // Pass userId to ingestion service for data isolation
     let ingestionResult;
     switch (fileType) {
-      case 'customers': ingestionResult = await ingestionService.ingestCustomers(validationResult.validRecords); break;
-      case 'orders': ingestionResult = await ingestionService.ingestOrders(validationResult.validRecords); break;
-      case 'order_lines': ingestionResult = await ingestionService.ingestOrderLines(validationResult.validRecords); break;
-      case 'products': ingestionResult = await ingestionService.ingestProducts(validationResult.validRecords); break;
+      case 'customers': 
+        ingestionResult = await ingestionService.ingestCustomers(validationResult.validRecords, userId); 
+        break;
+      case 'orders': 
+        ingestionResult = await ingestionService.ingestOrders(validationResult.validRecords, userId); 
+        break;
+      case 'order_lines': 
+        ingestionResult = await ingestionService.ingestOrderLines(validationResult.validRecords, userId); 
+        break;
+      case 'products': 
+        ingestionResult = await ingestionService.ingestProducts(validationResult.validRecords, userId); 
+        break;
     }
 
-    await ingestionService.logIngestion(fileType, fileName, validationResult.totalRows, ingestionResult.inserted, ingestionResult.failed, ingestionResult.errors, 'success');
+    await ingestionService.logIngestion(fileType, fileName, validationResult.totalRows, ingestionResult.inserted, ingestionResult.failed, ingestionResult.errors, 'success', userId);
     fs.unlinkSync(filePath);
 
     res.json({
@@ -98,6 +111,7 @@ router.post('/', upload.single('file'), async (req, res) => {
       validation: { totalRows: validationResult.totalRows, validRows: validationResult.validRows },
       ingestion: { inserted: ingestionResult.inserted, failed: ingestionResult.failed, errors: ingestionResult.errors },
       qaReport,
+      userId, // Return user ID for debugging
     });
   } catch (error) {
     console.error('Upload error:', error);
@@ -108,33 +122,63 @@ router.post('/', upload.single('file'), async (req, res) => {
 
 router.get('/logs', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM ingestion_logs ORDER BY ingested_at DESC LIMIT 50');
+    const userId = req.userId;
+    let query = 'SELECT * FROM ingestion_logs';
+    let params = [];
+    
+    // Filter by user if logged in
+    if (userId) {
+      query += ' WHERE user_id = $1';
+      params.push(userId);
+    }
+    
+    query += ' ORDER BY ingested_at DESC LIMIT 50';
+    
+    const result = await pool.query(query, params);
     res.json({ logs: result.rows });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch logs' });
   }
 });
 
-// Check upload status - returns row counts for each table
+// Check upload status - returns row counts for each table (filtered by user)
 router.get('/status', async (req, res) => {
   try {
+    const userId = req.userId;
     const tables = ['customers', 'products', 'orders', 'order_lines'];
     const status = {};
     
     for (const table of tables) {
       try {
-        const result = await pool.query(`SELECT COUNT(*) as count FROM ${table}`);
+        // Filter by user_id if available
+        let countQuery = `SELECT COUNT(*) as count FROM ${table}`;
+        let countParams = [];
+        
+        if (userId) {
+          countQuery += ' WHERE user_id = $1';
+          countParams.push(userId);
+        }
+        
+        const result = await pool.query(countQuery, countParams);
         const count = parseInt(result.rows[0].count, 10);
+        
         if (count > 0) {
           // Get last upload info from ingestion_logs
-          const logResult = await pool.query(
-            `SELECT file_name, rows_inserted, ingested_at 
-             FROM ingestion_logs 
-             WHERE file_type = $1 AND status = 'success'
-             ORDER BY ingested_at DESC 
-             LIMIT 1`,
-            [table === 'order_lines' ? 'order_lines' : table]
-          );
+          let logQuery = `
+            SELECT file_name, rows_inserted, ingested_at 
+            FROM ingestion_logs 
+            WHERE file_type = $1 AND status = 'success'
+          `;
+          let logParams = [table === 'order_lines' ? 'order_lines' : table];
+          
+          if (userId) {
+            logQuery += ' AND user_id = $2';
+            logParams.push(userId);
+          }
+          
+          logQuery += ' ORDER BY ingested_at DESC LIMIT 1';
+          
+          const logResult = await pool.query(logQuery, logParams);
           
           const key = table === 'order_lines' ? 'orderlines' : table;
           status[key] = {
@@ -144,11 +188,12 @@ router.get('/status', async (req, res) => {
           };
         }
       } catch (e) {
-        // Table might not exist, skip
+        // Table might not exist or user_id column not yet added, skip
+        console.log(`Status check for ${table} skipped:`, e.message);
       }
     }
     
-    res.json({ status });
+    res.json({ status, userId });
   } catch (error) {
     console.error('Status check error:', error);
     res.status(500).json({ error: 'Failed to check upload status' });

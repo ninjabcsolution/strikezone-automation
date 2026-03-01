@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { HiLightBulb, HiTrendingUp, HiOutlineLightningBolt } from 'react-icons/hi';
 import Layout from '../components/Layout';
-import { getApiUrl } from '../utils/api';
+import { getApiUrl, authFetch } from '../utils/api';
 
 const getAPI_URL = () => typeof window !== 'undefined' ? getApiUrl() : 'http://localhost:5002';
 
@@ -28,10 +28,10 @@ export default function CEODashboard() {
     try {
       const API_URL = getAPI_URL();
       const [statsRes, customersRes, comparisonRes, cagrRes] = await Promise.all([
-        fetch(`${API_URL}/api/analytics/stats`),
-        fetch(`${API_URL}/api/analytics/top20?limit=10`),
-        fetch(`${API_URL}/api/analytics/top20-comparison?rankBy=${rankBy}`),
-        fetch(`${API_URL}/api/analytics/cagr-analysis?limit=50`)
+        authFetch(`${API_URL}/api/analytics/stats`),
+        authFetch(`${API_URL}/api/analytics/top20?limit=10`),
+        authFetch(`${API_URL}/api/analytics/top20-comparison?rankBy=${rankBy}`),
+        authFetch(`${API_URL}/api/analytics/cagr-analysis?limit=50`)
       ]);
       
       if (statsRes.ok) {
@@ -60,7 +60,7 @@ export default function CEODashboard() {
   const fetchComparison = async () => {
     try {
       const API_URL = getAPI_URL();
-      const res = await fetch(`${API_URL}/api/analytics/top20-comparison?rankBy=${rankBy}`);
+      const res = await authFetch(`${API_URL}/api/analytics/top20-comparison?rankBy=${rankBy}`);
       if (res.ok) {
         const data = await res.json();
         setComparison(data);
