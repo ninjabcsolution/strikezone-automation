@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import Layout from '../components/Layout';
-import { getApiUrl } from '../utils/api';
+import { getApiUrl, authFetch, getAuthToken } from '../utils/api';
 
 const getAPI_URL = () => typeof window !== 'undefined' ? getApiUrl() : 'http://localhost:5002';
 
@@ -69,8 +69,8 @@ export default function IcpDashboard() {
     setError(null);
     try {
       const [sRes, fRes] = await Promise.all([
-        fetch(`${getAPI_URL()}/api/icp/summary`),
-        fetch(`${getAPI_URL()}/api/icp/external-filters`),
+        authFetch(`${getAPI_URL()}/api/icp/summary`),
+        authFetch(`${getAPI_URL()}/api/icp/external-filters`),
       ]);
       const sData = await sRes.json();
       const fData = await fRes.json();
@@ -96,7 +96,7 @@ export default function IcpDashboard() {
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch(`${getAPI_URL()}/api/icp/calculate`, {
+      const res = await authFetch(`${getAPI_URL()}/api/icp/calculate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Actor': actor },
       });

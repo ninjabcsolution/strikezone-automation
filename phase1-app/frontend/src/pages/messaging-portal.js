@@ -285,7 +285,15 @@ export default function MessagingPortal() {
           </label>
           <div style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid #d1d5db', borderRadius: '6px', padding: '10px' }}>
             {contacts.length === 0 ? (
-              <p style={{ color: '#999', textAlign: 'center' }}>No enriched contacts available. Run contact enrichment first.</p>
+              <div style={{ textAlign: 'center', padding: '10px' }}>
+                <p style={{ color: '#999', marginBottom: '10px' }}>No enriched contacts available.</p>
+                <p style={{ color: '#666', fontSize: '13px' }}>
+                  To populate contacts:<br/>
+                  1. Go to <strong>Approval Portal</strong><br/>
+                  2. Approve targets with domains<br/>
+                  3. Click <strong>"Run Enrichment"</strong>
+                </p>
+              </div>
             ) : (
               contacts.map(c => (
                 <label key={c.id} style={{ display: 'flex', alignItems: 'center', padding: '5px', cursor: 'pointer' }}>
@@ -484,7 +492,7 @@ export default function MessagingPortal() {
                 onClick={() => setSelectedMessage(null)}
                 style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}
               >
-                ×
+                &times;
               </button>
             </div>
 

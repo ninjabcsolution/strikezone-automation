@@ -4,6 +4,86 @@ import { useRouter } from 'next/router';
 import Logo from './Logo';
 import { useAuth } from '../context/AuthContext';
 
+// Simple SVG Icon components
+const Icons = {
+  Upload: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="17 8 12 3 7 8" />
+      <line x1="12" y1="3" x2="12" y2="15" />
+    </svg>
+  ),
+  Chart: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="20" x2="18" y2="10" />
+      <line x1="12" y1="20" x2="12" y2="4" />
+      <line x1="6" y1="20" x2="6" y2="14" />
+    </svg>
+  ),
+  Target: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <circle cx="12" cy="12" r="6" />
+      <circle cx="12" cy="12" r="2" />
+    </svg>
+  ),
+  Search: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
+  ),
+  Check: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+      <polyline points="22 4 12 14.01 9 11.01" />
+    </svg>
+  ),
+  Mail: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+      <polyline points="22,6 12,13 2,6" />
+    </svg>
+  ),
+  Help: () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
+    </svg>
+  ),
+  Shield: () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+  ),
+  Book: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+    </svg>
+  ),
+  Question: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
+    </svg>
+  ),
+  Logout: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
+  ),
+  ChevronDown: () => (
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  ),
+};
+
 export default function Header() {
   const router = useRouter();
   const { user, isAdmin, signout } = useAuth();
@@ -24,13 +104,14 @@ export default function Header() {
     return name.substring(0, 2).toUpperCase();
   };
 
-  // Navigation items
+  // Navigation items with icon components
   const navItems = [
-    { href: '/', label: 'Upload', icon: '📤' },
-    { href: '/ceo-dashboard', label: 'CEO Dashboard', icon: '📊' },
-    { href: '/icp-dashboard', label: 'ICP Dashboard', icon: '🎯' },
-    { href: '/approval-portal', label: 'Approval', icon: '✅' },
-    { href: '/messaging-portal', label: 'Messaging', icon: '📨' },
+    { href: '/', label: 'Upload', Icon: Icons.Upload },
+    { href: '/ceo-dashboard', label: 'CEO Dashboard', Icon: Icons.Chart },
+    { href: '/icp-dashboard', label: 'ICP', Icon: Icons.Target },
+    { href: '/lookalike-search', label: 'Lookalike', Icon: Icons.Search },
+    { href: '/approval-portal', label: 'Approval', Icon: Icons.Check },
+    { href: '/messaging-portal', label: 'Messaging', Icon: Icons.Mail },
   ];
 
   const isActive = (href) => {
@@ -89,7 +170,7 @@ export default function Header() {
               }
             }}
           >
-            <span style={{ fontSize: '16px' }}>{item.icon}</span>
+            <item.Icon />
             {item.label}
           </Link>
         ))}
@@ -100,6 +181,9 @@ export default function Header() {
         {/* Help Links */}
         <Link href="/guide" style={{ 
           textDecoration: 'none', 
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px',
           color: '#9ca3af', 
           fontSize: '13px',
           padding: '6px 10px',
@@ -108,6 +192,7 @@ export default function Header() {
         onMouseEnter={(e) => { e.currentTarget.style.color = '#6b7280'; e.currentTarget.style.background = '#f3f4f6'; }}
         onMouseLeave={(e) => { e.currentTarget.style.color = '#9ca3af'; e.currentTarget.style.background = 'transparent'; }}
         >
+          <Icons.Help />
           Help
         </Link>
 
@@ -125,7 +210,8 @@ export default function Header() {
             background: '#f5f3ff',
             borderRadius: '6px',
           }}>
-            🛡️ Admin
+            <Icons.Shield />
+            Admin
           </Link>
         )}
 
@@ -163,7 +249,7 @@ export default function Header() {
             <span style={{ fontWeight: '500', color: '#374151', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {user?.fullName?.split(' ')[0] || 'User'}
             </span>
-            <span style={{ fontSize: '10px', color: '#9ca3af' }}>▼</span>
+            <Icons.ChevronDown />
           </button>
 
           {/* Dropdown Menu */}
@@ -229,7 +315,8 @@ export default function Header() {
                     onMouseEnter={(e) => e.currentTarget.style.background = '#f3f4f6'}
                     onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                     >
-                      📖 Guide
+                      <Icons.Book />
+                      Guide
                     </div>
                   </Link>
 
@@ -247,7 +334,8 @@ export default function Header() {
                     onMouseEnter={(e) => e.currentTarget.style.background = '#f3f4f6'}
                     onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                     >
-                      ❓ FAQ
+                      <Icons.Question />
+                      FAQ
                     </div>
                   </Link>
 
@@ -268,7 +356,8 @@ export default function Header() {
                     onMouseEnter={(e) => e.currentTarget.style.background = '#fef2f2'}
                     onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                   >
-                    🚪 Sign Out
+                    <Icons.Logout />
+                    Sign Out
                   </div>
                 </div>
               </div>

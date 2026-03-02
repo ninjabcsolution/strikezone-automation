@@ -10,17 +10,28 @@ const auditLogService = require('./auditLogService');
 //
 // Output stored in icp_traits.
 class ICPTraitsService {
-  async calculateTraits(actor) {
+  async calculateTraits(actor, userId = null) {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      await client.query('TRUNCATE TABLE icp_traits');
+      
+      // If user_id provided, only delete traits for that user
+      if (userId) {
+        await client.query('DELETE FROM icp_traits WHERE user_id = $1', [userId]);
+      } else {
+        await client.query('TRUNCATE TABLE icp_traits');
+      }
+
+      // Build user filter for customer_metrics
+      const userWhere = userId ? 'WHERE user_id = $1' : '';
+      const userParams = userId ? [userId] : [];
 
       const total = await client.query(
         `SELECT
           COUNT(*) FILTER (WHERE is_top_20 = true)::numeric AS top20,
           COUNT(*) FILTER (WHERE is_top_20 = false)::numeric AS others
-        FROM customer_metrics`
+        FROM customer_metrics ${userWhere}`,
+        userParams
       );
 
       const top20Count = parseFloat(total.rows[0]?.top20 || 0);
@@ -33,7 +44,7 @@ class ICPTraitsService {
 
       // helper to insert traits from a query that returns: trait_value, top20_count, others_count
       const insertFrom = async ({ category, name, sql }) => {
-        const res = await client.query(sql);
+        const res = await client.query(sql, userParams);
         if (res.rows.length === 0) return 0;
 
         const values = [];
@@ -61,13 +72,13 @@ class ICPTraitsService {
           // Clamp to avoid numeric overflow (schema is NUMERIC(5,2)).
           const importance = lift ? Math.min(100, Math.max(0, (lift - 1) * topFreq)) : 0;
 
-          values.push(`($${p++}, $${p++}, $${p++}, $${p++}, $${p++}, $${p++}, $${p++})`);
-          params.push(category, name, traitValue, topFreq, otherFreq, lift, importance);
+          values.push(`($${p++}, $${p++}, $${p++}, $${p++}, $${p++}, $${p++}, $${p++}, $${p++})`);
+          params.push(userId, category, name, traitValue, topFreq, otherFreq, lift, importance);
         }
 
         await client.query(
           `INSERT INTO icp_traits (
-             trait_category, trait_name, trait_value,
+             user_id, trait_category, trait_name, trait_value,
              top20_frequency, others_frequency, lift, importance_score
            ) VALUES ${values.join(', ')}`,
           params
@@ -76,6 +87,9 @@ class ICPTraitsService {
         return res.rows.length;
       };
 
+      // Build user filter for JOINs - always need user_id in JOINs for composite keys
+      const cmUserJoin = userId ? 'AND cm.user_id = $1' : '';
+
       const insertedIndustry = await insertFrom({
         category: 'firmographic',
         name: 'industry',
@@ -83,8 +97,8 @@ class ICPTraitsService {
           WITH base AS (
             SELECT cm.is_top_20, c.industry AS trait_value
             FROM customer_metrics cm
-            JOIN customers c ON c.customer_id = cm.customer_id
-            WHERE c.industry IS NOT NULL AND c.industry <> ''
+            JOIN customers c ON c.customer_id = cm.customer_id AND c.user_id = cm.user_id
+            WHERE c.industry IS NOT NULL AND c.industry <> '' ${cmUserJoin}
           )
           SELECT trait_value,
                  COUNT(*) FILTER (WHERE is_top_20 = true)  AS top20_count,
@@ -103,8 +117,8 @@ class ICPTraitsService {
           WITH base AS (
             SELECT cm.is_top_20, c.state AS trait_value
             FROM customer_metrics cm
-            JOIN customers c ON c.customer_id = cm.customer_id
-            WHERE c.state IS NOT NULL AND c.state <> ''
+            JOIN customers c ON c.customer_id = cm.customer_id AND c.user_id = cm.user_id
+            WHERE c.state IS NOT NULL AND c.state <> '' ${cmUserJoin}
           )
           SELECT trait_value,
                  COUNT(*) FILTER (WHERE is_top_20 = true)  AS top20_count,
@@ -123,8 +137,8 @@ class ICPTraitsService {
           WITH base AS (
             SELECT cm.is_top_20, c.naics AS trait_value
             FROM customer_metrics cm
-            JOIN customers c ON c.customer_id = cm.customer_id
-            WHERE c.naics IS NOT NULL AND c.naics <> ''
+            JOIN customers c ON c.customer_id = cm.customer_id AND c.user_id = cm.user_id
+            WHERE c.naics IS NOT NULL AND c.naics <> '' ${cmUserJoin}
           )
           SELECT trait_value,
                  COUNT(*) FILTER (WHERE is_top_20 = true)  AS top20_count,
@@ -148,9 +162,9 @@ class ICPTraitsService {
               cm.customer_id,
               ol.product_category AS trait_value
             FROM customer_metrics cm
-            JOIN orders o ON o.customer_id = cm.customer_id
-            JOIN order_lines ol ON ol.order_id = o.order_id
-            WHERE ol.product_category IS NOT NULL AND ol.product_category <> ''
+            JOIN orders o ON o.customer_id = cm.customer_id AND o.user_id = cm.user_id
+            JOIN order_lines ol ON ol.order_id = o.order_id AND ol.user_id = o.user_id
+            WHERE ol.product_category IS NOT NULL AND ol.product_category <> '' ${cmUserJoin}
           )
           SELECT trait_value,
                  COUNT(*) FILTER (WHERE is_top_20 = true)  AS top20_count,
@@ -170,7 +184,7 @@ class ICPTraitsService {
         actor,
         action: 'icp_traits.calculated',
         entityType: 'icp_traits',
-        details: { inserted },
+        details: { inserted, userId },
       });
 
       return {
@@ -190,9 +204,16 @@ class ICPTraitsService {
     }
   }
 
-  async listTraits({ category, name, limit = 50 }) {
+  async listTraits({ category, name, limit = 50, userId = null }) {
+    // If no userId, return empty - require login for data access
+    if (!userId) {
+      return [];
+    }
+    
     const params = [];
-    const where = [];
+    const where = ['user_id = $1'];
+    params.push(userId);
+    
     if (category) {
       params.push(category);
       where.push(`trait_category = $${params.length}`);
@@ -202,7 +223,7 @@ class ICPTraitsService {
       where.push(`trait_name = $${params.length}`);
     }
     params.push(limit);
-    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    const whereSql = `WHERE ${where.join(' AND ')}`;
 
     const res = await pool.query(
       `SELECT * FROM icp_traits
@@ -214,12 +235,22 @@ class ICPTraitsService {
     return res.rows;
   }
 
-  async summary() {
+  async summary(userId = null) {
+    // If no userId, return empty summary - require login for data access
+    if (!userId) {
+      return {
+        industries: [],
+        states: [],
+        naics: [],
+        productCategories: [],
+      };
+    }
+    
     // Build a compact 1-page summary payload for UI/export.
-    const topIndustry = await this.listTraits({ name: 'industry', limit: 10 });
-    const topStates = await this.listTraits({ name: 'state', limit: 10 });
-    const topNaics = await this.listTraits({ name: 'naics', limit: 10 });
-    const topProduct = await this.listTraits({ name: 'product_category', limit: 10 });
+    const topIndustry = await this.listTraits({ name: 'industry', limit: 10, userId });
+    const topStates = await this.listTraits({ name: 'state', limit: 10, userId });
+    const topNaics = await this.listTraits({ name: 'naics', limit: 10, userId });
+    const topProduct = await this.listTraits({ name: 'product_category', limit: 10, userId });
 
     return {
       industries: topIndustry,

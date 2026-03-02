@@ -82,14 +82,15 @@ class ApolloService {
       throw err;
     }
 
-    const url = 'https://api.apollo.io/api/v1/mixed_people/search';
+    // Use the new endpoint as per Apollo docs
+    const url = 'https://api.apollo.io/api/v1/mixed_people/api_search';
 
     const body = {
       page,
       per_page: perPage,
       person_titles: titles.length ? titles : undefined,
       person_seniorities: seniorities.length ? seniorities : undefined,
-      organization_domains: organizationDomains.length ? organizationDomains : undefined,
+      q_organization_domains: organizationDomains.length ? organizationDomains.join('\n') : undefined,
     };
 
     const resp = await fetch(url, {

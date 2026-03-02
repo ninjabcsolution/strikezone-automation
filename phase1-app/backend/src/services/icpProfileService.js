@@ -3,7 +3,26 @@ const { pool } = require('../config/database');
 // A very lightweight ICP profile derived from the current Top 20% customers.
 // This is intentionally explainable and easy to iterate.
 class ICPProfileService {
-  async getTop20Profile() {
+  /**
+   * Get Top 20% profile filtered by user
+   * @param {number|null} userId - User ID for data isolation (null returns empty data)
+   */
+  async getTop20Profile(userId = null) {
+    // If no userId, return empty profile - require login for data access
+    if (!userId) {
+      return {
+        industries: [],
+        states: [],
+        employeeCount: { p25: null, p75: null },
+        annualRevenue: { p25: null, p75: null },
+      };
+    }
+    
+    // Build user filter
+    const userFilter = 'AND cm.user_id = $1';
+    const customerUserFilter = userId ? 'AND c.user_id = $1' : '';
+    const params = userId ? [userId] : [];
+    
     // We derive:
     // - top industries + weights
     // - top states + weights
@@ -11,21 +30,23 @@ class ICPProfileService {
     const industries = await pool.query(
       `SELECT c.industry, COUNT(*)::int AS count
        FROM customer_metrics cm
-       JOIN customers c ON c.customer_id = cm.customer_id
-       WHERE cm.is_top_20 = true AND c.industry IS NOT NULL AND c.industry <> ''
+       JOIN customers c ON c.customer_id = cm.customer_id ${userId ? 'AND c.user_id = cm.user_id' : ''}
+       WHERE cm.is_top_20 = true AND c.industry IS NOT NULL AND c.industry <> '' ${userFilter}
        GROUP BY c.industry
        ORDER BY count DESC
-       LIMIT 10`
+       LIMIT 10`,
+      params
     );
 
     const states = await pool.query(
       `SELECT c.state, COUNT(*)::int AS count
        FROM customer_metrics cm
-       JOIN customers c ON c.customer_id = cm.customer_id
-       WHERE cm.is_top_20 = true AND c.state IS NOT NULL AND c.state <> ''
+       JOIN customers c ON c.customer_id = cm.customer_id ${userId ? 'AND c.user_id = cm.user_id' : ''}
+       WHERE cm.is_top_20 = true AND c.state IS NOT NULL AND c.state <> '' ${userFilter}
        GROUP BY c.state
        ORDER BY count DESC
-       LIMIT 10`
+       LIMIT 10`,
+      params
     );
 
     const employee = await pool.query(
@@ -33,8 +54,9 @@ class ICPProfileService {
           percentile_cont(0.25) WITHIN GROUP (ORDER BY employee_count) AS p25,
           percentile_cont(0.75) WITHIN GROUP (ORDER BY employee_count) AS p75
        FROM customers c
-       JOIN customer_metrics cm ON cm.customer_id = c.customer_id
-       WHERE cm.is_top_20 = true AND c.employee_count IS NOT NULL`
+       JOIN customer_metrics cm ON cm.customer_id = c.customer_id ${userId ? 'AND c.user_id = cm.user_id' : ''}
+       WHERE cm.is_top_20 = true AND c.employee_count IS NOT NULL ${userFilter}`,
+      params
     );
 
     const revenue = await pool.query(
@@ -42,8 +64,9 @@ class ICPProfileService {
           percentile_cont(0.25) WITHIN GROUP (ORDER BY annual_revenue) AS p25,
           percentile_cont(0.75) WITHIN GROUP (ORDER BY annual_revenue) AS p75
        FROM customers c
-       JOIN customer_metrics cm ON cm.customer_id = c.customer_id
-       WHERE cm.is_top_20 = true AND c.annual_revenue IS NOT NULL`
+       JOIN customer_metrics cm ON cm.customer_id = c.customer_id ${userId ? 'AND c.user_id = cm.user_id' : ''}
+       WHERE cm.is_top_20 = true AND c.annual_revenue IS NOT NULL ${userFilter}`,
+      params
     );
 
     const topIndustries = industries.rows.map((r) => ({ value: r.industry, count: r.count }));

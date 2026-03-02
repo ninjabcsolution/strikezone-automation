@@ -11,11 +11,15 @@
 const express = require('express');
 const messagingService = require('../services/messagingService');
 const openaiService = require('../services/openaiService');
+const { optionalAuth, getUserIdFilter } = require('../middleware/auth');
 
 const router = express.Router();
 
+// Apply optional auth to all messaging routes for user data isolation
+router.use(optionalAuth);
+
 function getActor(req) {
-  return req.header('X-Actor') || 'api';
+  return req.user?.email || req.header('X-Actor') || 'api';
 }
 
 // ========================================
@@ -102,6 +106,7 @@ router.put('/templates/:id', async (req, res) => {
 router.post('/generate', async (req, res) => {
   try {
     const actor = getActor(req);
+    const userId = getUserIdFilter(req);
     const { contactId, templateId, messageType, tone, customInstructions } = req.body;
 
     if (!contactId) {
@@ -114,7 +119,7 @@ router.post('/generate', async (req, res) => {
       messageType,
       tone,
       customInstructions,
-    }, actor);
+    }, actor, userId);
 
     res.status(201).json({ message });
   } catch (err) {
@@ -126,6 +131,7 @@ router.post('/generate', async (req, res) => {
 router.post('/generate/batch', async (req, res) => {
   try {
     const actor = getActor(req);
+    const userId = getUserIdFilter(req);
     const { contactIds, templateId, messageType, tone, customInstructions } = req.body;
 
     if (!contactIds || !contactIds.length) {
@@ -142,7 +148,7 @@ router.post('/generate/batch', async (req, res) => {
       messageType,
       tone,
       customInstructions,
-    }, actor);
+    }, actor, userId);
 
     res.status(201).json(result);
   } catch (err) {
@@ -158,13 +164,14 @@ router.post('/generate/batch', async (req, res) => {
 router.post('/messages/bulk/approve', async (req, res) => {
   try {
     const actor = getActor(req);
+    const userId = getUserIdFilter(req);
     const { ids } = req.body;
 
     if (!ids || !ids.length) {
       return res.status(400).json({ error: 'ids array is required' });
     }
 
-    const result = await messagingService.bulkApprove(ids, actor, actor);
+    const result = await messagingService.bulkApprove(ids, actor, actor, userId);
     res.json({ approved: result.length, ids: result.map(r => r.id) });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -175,13 +182,14 @@ router.post('/messages/bulk/approve', async (req, res) => {
 router.post('/messages/bulk/reject', async (req, res) => {
   try {
     const actor = getActor(req);
+    const userId = getUserIdFilter(req);
     const { ids, reason } = req.body;
 
     if (!ids || !ids.length) {
       return res.status(400).json({ error: 'ids array is required' });
     }
 
-    const result = await messagingService.bulkReject(ids, reason || 'Bulk rejected', actor, actor);
+    const result = await messagingService.bulkReject(ids, reason || 'Bulk rejected', actor, actor, userId);
     res.json({ rejected: result.length, ids: result.map(r => r.id) });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -195,6 +203,7 @@ router.post('/messages/bulk/reject', async (req, res) => {
 // GET /api/messaging/messages - List messages with filters
 router.get('/messages', async (req, res) => {
   try {
+    const userId = getUserIdFilter(req);
     const { status, type, contactId, limit: limitStr, page: pageStr } = req.query;
     const limit = limitStr ? Math.min(parseInt(limitStr, 10) || 20, 100) : 20;
     const page = pageStr ? parseInt(pageStr, 10) || 1 : 1;
@@ -206,6 +215,7 @@ router.get('/messages', async (req, res) => {
       contactId: contactId ? parseInt(contactId, 10) : undefined,
       limit,
       offset,
+      userId,
     });
     
     res.json({ 
@@ -227,7 +237,8 @@ router.get('/messages', async (req, res) => {
 // GET /api/messaging/messages/stats - Get message approval stats
 router.get('/messages/stats', async (req, res) => {
   try {
-    const stats = await messagingService.getMessageStats();
+    const userId = getUserIdFilter(req);
+    const stats = await messagingService.getMessageStats(userId);
     res.json({ stats });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -237,7 +248,8 @@ router.get('/messages/stats', async (req, res) => {
 // GET /api/messaging/messages/:id - Get single message
 router.get('/messages/:id', async (req, res) => {
   try {
-    const message = await messagingService.getMessageById(req.params.id);
+    const userId = getUserIdFilter(req);
+    const message = await messagingService.getMessageById(req.params.id, userId);
     if (!message) {
       return res.status(404).json({ error: 'Message not found' });
     }
@@ -255,10 +267,12 @@ router.get('/messages/:id', async (req, res) => {
 router.post('/messages/:id/approve', async (req, res) => {
   try {
     const actor = getActor(req);
+    const userId = getUserIdFilter(req);
     const message = await messagingService.approveMessage(
       req.params.id,
       actor,
-      actor
+      actor,
+      userId
     );
     if (!message) {
       return res.status(404).json({ error: 'Message not found' });
@@ -273,13 +287,15 @@ router.post('/messages/:id/approve', async (req, res) => {
 router.post('/messages/:id/reject', async (req, res) => {
   try {
     const actor = getActor(req);
+    const userId = getUserIdFilter(req);
     const { reason } = req.body;
     
     const message = await messagingService.rejectMessage(
       req.params.id,
       reason || 'No reason provided',
       actor,
-      actor
+      actor,
+      userId
     );
     if (!message) {
       return res.status(404).json({ error: 'Message not found' });
@@ -294,6 +310,7 @@ router.post('/messages/:id/reject', async (req, res) => {
 router.post('/messages/:id/edit', async (req, res) => {
   try {
     const actor = getActor(req);
+    const userId = getUserIdFilter(req);
     const { body, subject } = req.body;
 
     if (!body) {
@@ -305,7 +322,8 @@ router.post('/messages/:id/edit', async (req, res) => {
       body,
       subject,
       actor,
-      actor
+      actor,
+      userId
     );
     if (!message) {
       return res.status(404).json({ error: 'Message not found' });
@@ -323,9 +341,11 @@ router.post('/messages/:id/edit', async (req, res) => {
 // GET /api/messaging/runs - List generation runs
 router.get('/runs', async (req, res) => {
   try {
+    const userId = getUserIdFilter(req);
     const { limit } = req.query;
     const runs = await messagingService.getGenerationRuns({
       limit: limit ? parseInt(limit, 10) : 20,
+      userId,
     });
     res.json({ runs });
   } catch (err) {
@@ -340,9 +360,11 @@ router.get('/runs', async (req, res) => {
 // GET /api/messaging/export - Export approved messages as CSV
 router.get('/export', async (req, res) => {
   try {
+    const userId = getUserIdFilter(req);
     const { type } = req.query;
     const messages = await messagingService.exportApprovedMessages({
       messageType: type,
+      userId,
     });
 
     const headers = ['Contact Name', 'Email', 'Company', 'Subject', 'Body', 'Type', 'Approved At'];
@@ -372,9 +394,11 @@ router.get('/export', async (req, res) => {
 // GET /api/messaging/export/json - Export approved messages as JSON
 router.get('/export/json', async (req, res) => {
   try {
+    const userId = getUserIdFilter(req);
     const { type } = req.query;
     const messages = await messagingService.exportApprovedMessages({
       messageType: type,
+      userId,
     });
     res.json({ messages });
   } catch (err) {

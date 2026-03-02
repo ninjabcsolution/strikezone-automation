@@ -29,6 +29,7 @@ CREATE INDEX IF NOT EXISTS idx_customer_metrics_percentile ON customer_metrics(p
 -- ICP traits (extracted patterns)
 CREATE TABLE IF NOT EXISTS icp_traits (
     trait_id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(user_id) ON DELETE CASCADE,
     trait_category VARCHAR(50),
     trait_name VARCHAR(100),
     trait_value TEXT,
@@ -41,6 +42,10 @@ CREATE TABLE IF NOT EXISTS icp_traits (
 
 CREATE INDEX IF NOT EXISTS idx_icp_traits_category ON icp_traits(trait_category);
 CREATE INDEX IF NOT EXISTS idx_icp_traits_importance ON icp_traits(importance_score DESC);
+CREATE INDEX IF NOT EXISTS idx_icp_traits_user ON icp_traits(user_id);
+
+-- Add user_id to icp_traits if missing (for existing installations)
+ALTER TABLE icp_traits ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(user_id) ON DELETE CASCADE;
 
 -- Look-alike targets
 CREATE TABLE IF NOT EXISTS lookalike_targets (
@@ -67,3 +72,12 @@ CREATE TABLE IF NOT EXISTS lookalike_targets (
 CREATE INDEX IF NOT EXISTS idx_lookalike_targets_tier ON lookalike_targets(tier);
 CREATE INDEX IF NOT EXISTS idx_lookalike_targets_score ON lookalike_targets(similarity_score DESC);
 CREATE INDEX IF NOT EXISTS idx_lookalike_targets_status ON lookalike_targets(status);
+
+-- Add source and source_external_id columns if missing + unique constraint for upsert
+ALTER TABLE lookalike_targets ADD COLUMN IF NOT EXISTS source VARCHAR(50);
+ALTER TABLE lookalike_targets ADD COLUMN IF NOT EXISTS source_external_id VARCHAR(255);
+ALTER TABLE lookalike_targets ADD COLUMN IF NOT EXISTS external_data JSONB;
+
+-- Unique constraint for deduplication (ON CONFLICT requires this)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_lookalike_targets_source_id 
+ON lookalike_targets(source, source_external_id) WHERE source_external_id IS NOT NULL;

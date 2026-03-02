@@ -92,7 +92,7 @@ const faqCategories = [
       },
       {
         q: 'What is the Approval Portal?',
-        a: 'The Approval Portal is where you review AI-suggested target companies before they enter your outreach pipeline. You can approve, reject, or skip targets, edit tier rankings, and add notes. This ensures human oversight of all targeting decisions.'
+        a: 'The Approval Portal is where you review AI-suggested target companies before they enter your outreach pipeline. You can approve, reject, or skip targets, edit tier rankings, and add notes. It also includes the Contact Enrichment feature to find contacts at approved companies.'
       },
       {
         q: 'What do the Tier rankings mean?',
@@ -101,6 +101,14 @@ const faqCategories = [
       {
         q: 'What is a "Win-back" target?',
         a: 'Win-back targets are existing customers who have become inactive (no orders in X days) but were historically high-margin. They\'re often easier to convert than new prospects since they already know your company.'
+      },
+      {
+        q: 'What is Contact Enrichment?',
+        a: 'Contact Enrichment is the process of finding real people (contacts) at approved target companies. It uses the Apollo.io API to search for employees by company domain and returns names, titles, emails, and LinkedIn profiles. This is required before you can generate messages in the Messaging Portal.'
+      },
+      {
+        q: 'How do I run Contact Enrichment?',
+        a: 'Go to the Approval Portal → Look for the "Run Contact Enrichment" section → Set max contacts per company (default 5) → Click "Run Enrichment". Requirements: 1) APOLLO_API_KEY must be set in backend/.env, 2) Targets must be approved, 3) Targets must have valid company domains.'
       },
     ]
   },
@@ -120,11 +128,19 @@ const faqCategories = [
       },
       {
         q: 'Do I need to review messages before sending?',
-        a: 'Yes! All AI-generated messages go through the Approval Portal. You can approve them as-is, edit them, or reject them. This ensures every outreach message meets your quality standards.'
+        a: 'Yes! All AI-generated messages go through the approval process. You can approve them as-is, edit them, or reject them. This ensures every outreach message meets your quality standards.'
       },
       {
         q: 'Can I use my own templates?',
         a: 'Yes. You can create message templates in the system that the AI will use as a starting point. Templates can include variables like {{first_name}}, {{company}}, etc. that get replaced with real data.'
+      },
+      {
+        q: 'Why are no contacts showing in Messaging Portal?',
+        a: 'Contacts come from the enrichment process. To get contacts:\n1. Go to **Approval Portal**\n2. Approve targets that have domains\n3. Click **"Run Enrichment"** button\n4. Contacts will appear in Messaging Portal\n\nWithout enrichment, there are no contacts to message.'
+      },
+      {
+        q: 'What do I need for message generation?',
+        a: 'You need:\n1. **Enriched contacts** - run enrichment in Approval Portal first\n2. **OPENAI_API_KEY** - set in backend/.env for AI generation\n3. Select contacts and click Generate'
       },
     ]
   },
@@ -160,7 +176,7 @@ const faqCategories = [
     questions: [
       {
         q: 'Upload failed with "Failed to connect to server"',
-        a: 'Make sure the backend server is running (npm run dev in the backend folder). Check that NEXT_PUBLIC_API_URL in your frontend .env points to the correct backend URL (default: http://localhost:5000).'
+        a: 'Make sure the backend server is running (npm run dev in the backend folder). Check that NEXT_PUBLIC_API_URL in your frontend .env points to the correct backend URL (default: http://localhost:5002).'
       },
       {
         q: 'Top 20% calculation shows 0 customers',
@@ -173,6 +189,22 @@ const faqCategories = [
       {
         q: 'AI messages are not being generated',
         a: 'Verify your OPENAI_API_KEY is valid and has available credits. Check the browser console and backend logs for specific error messages. The OpenAI API occasionally has rate limits.'
+      },
+      {
+        q: 'Enrichment fails with "No approved targets with domains"',
+        a: 'Before running enrichment, you need:\n1. Targets in the system (generate or import them)\n2. Approve targets by clicking the "Approve" button\n3. Make sure approved targets have domain values (e.g., "acme.com")\n\nTargets without domains cannot be enriched.'
+      },
+      {
+        q: 'Enrichment fails with "API endpoint deprecated"',
+        a: 'This means Apollo updated their API. The system has been updated to use the new endpoint. Restart your backend server (npm run dev) to load the updated code.'
+      },
+      {
+        q: 'Contacts not appearing after enrichment',
+        a: 'Check:\n1. Backend logs for any errors during enrichment\n2. Ensure APOLLO_API_KEY is valid and has credits\n3. Verify the target companies have valid, real domains\n4. Try refreshing the Messaging Portal page'
+      },
+      {
+        q: '"Authentication required" error',
+        a: 'You need to be logged in for data isolation to work. If you\'re using the system without login, check that optionalAuth middleware is properly configured in the backend routes.'
       },
     ]
   },
