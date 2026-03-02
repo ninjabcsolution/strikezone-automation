@@ -5,11 +5,21 @@ const { pool } = require('../config/database');
 class ICPProfileService {
   /**
    * Get Top 20% profile filtered by user
-   * @param {number|null} userId - User ID for data isolation (null returns all data)
+   * @param {number|null} userId - User ID for data isolation (null returns empty data)
    */
   async getTop20Profile(userId = null) {
+    // If no userId, return empty profile - require login for data access
+    if (!userId) {
+      return {
+        industries: [],
+        states: [],
+        employeeCount: { p25: null, p75: null },
+        annualRevenue: { p25: null, p75: null },
+      };
+    }
+    
     // Build user filter
-    const userFilter = userId ? 'AND cm.user_id = $1' : '';
+    const userFilter = 'AND cm.user_id = $1';
     const customerUserFilter = userId ? 'AND c.user_id = $1' : '';
     const params = userId ? [userId] : [];
     

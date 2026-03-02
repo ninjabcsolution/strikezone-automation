@@ -300,7 +300,7 @@ export default function Home() {
                     <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
                       {isUploaded ? (
                         <span style={{ color: '#16a34a' }}>
-                          ✓ {uploadedFiles[ft.key].rows} rows
+                          &#10003; {uploadedFiles[ft.key].rows} rows
                         </span>
                       ) : (
                         ft.description

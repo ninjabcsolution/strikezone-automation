@@ -21,14 +21,15 @@ function csvEscape(v) {
 }
 
 function getActor(req) {
-  return req.header('X-Actor') || 'unknown';
+  return req.header('X-Actor') || req.user?.email || 'unknown';
 }
 
 // POST /api/icp/calculate
 router.post('/calculate', async (req, res) => {
   try {
     const actor = getActor(req);
-    const result = await icpTraitsService.calculateTraits(actor);
+    const userId = getUserIdFilter(req);
+    const result = await icpTraitsService.calculateTraits(actor, userId);
     res.json({ status: 'success', ...result });
   } catch (err) {
     res.status(500).json({ error: 'Failed to calculate ICP traits', message: err.message });
@@ -38,10 +39,11 @@ router.post('/calculate', async (req, res) => {
 // GET /api/icp/traits?category=&name=&limit=
 router.get('/traits', async (req, res) => {
   try {
+    const userId = getUserIdFilter(req);
     const category = req.query.category || undefined;
     const name = req.query.name || undefined;
     const limit = req.query.limit ? Math.min(parseInt(req.query.limit, 10) || 50, 200) : 50;
-    const traits = await icpTraitsService.listTraits({ category, name, limit });
+    const traits = await icpTraitsService.listTraits({ category, name, limit, userId });
     res.json({ status: 'success', traits });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch ICP traits', message: err.message });
@@ -51,7 +53,8 @@ router.get('/traits', async (req, res) => {
 // GET /api/icp/summary
 router.get('/summary', async (req, res) => {
   try {
-    const summary = await icpTraitsService.summary();
+    const userId = getUserIdFilter(req);
+    const summary = await icpTraitsService.summary(userId);
     res.json({ status: 'success', summary });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch ICP summary', message: err.message });
@@ -61,11 +64,12 @@ router.get('/summary', async (req, res) => {
 // GET /api/icp/export.csv
 router.get('/export.csv', async (req, res) => {
   try {
+    const userId = getUserIdFilter(req);
     const category = req.query.category || undefined;
     const name = req.query.name || undefined;
     const limit = req.query.limit ? Math.min(parseInt(req.query.limit, 10) || 500, 5000) : 500;
 
-    const traits = await icpTraitsService.listTraits({ category, name, limit });
+    const traits = await icpTraitsService.listTraits({ category, name, limit, userId });
 
     const headers = [
       'trait_category',
@@ -95,7 +99,8 @@ router.get('/export.csv', async (req, res) => {
 // GET /api/icp/export.md (1-page explainable ICP summary)
 router.get('/export.md', async (req, res) => {
   try {
-    const summary = await icpTraitsService.summary();
+    const userId = getUserIdFilter(req);
+    const summary = await icpTraitsService.summary(userId);
 
     const table = (rows) => {
       const hdr = '| Trait | Top20% | Others | Lift | Importance |\n|---|---:|---:|---:|---:|';
@@ -142,11 +147,12 @@ router.get('/export.md', async (req, res) => {
 // Returns values ready to paste into Apollo/LinkedIn filters (vendor-agnostic).
 router.get('/external-filters', async (req, res) => {
   try {
+    const userId = getUserIdFilter(req);
     const topN = req.query.topN ? Math.min(parseInt(req.query.topN, 10) || 10, 50) : 10;
     const minLift = req.query.minLift ? parseFloat(req.query.minLift) : 1.1;
 
-    const summary = await icpTraitsService.summary();
-    const profile = await icpProfileService.getTop20Profile();
+    const summary = await icpTraitsService.summary(userId);
+    const profile = await icpProfileService.getTop20Profile(userId);
 
     const pick = (rows) =>
       (rows || [])

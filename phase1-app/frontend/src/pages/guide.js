@@ -811,7 +811,7 @@ export default function GuidePage() {
                 borderRadius: '10px',
                 border: '1px solid #bbf7d0',
               }}>
-                <h4 style={{ margin: '0 0 8px', fontSize: '14px', color: '#166534' }}>✅ Expected Results</h4>
+                <h4 style={{ margin: '0 0 8px', fontSize: '14px', color: '#166534' }}>Expected Results</h4>
                 <p style={{ margin: 0, fontSize: '14px', color: '#15803d' }}>{page.expectedResults}</p>
               </div>
 
@@ -824,7 +824,7 @@ export default function GuidePage() {
                   borderRadius: '10px',
                   border: '1px solid #fde68a',
                 }}>
-                  <h4 style={{ margin: '0 0 10px', fontSize: '14px', color: '#b45309' }}>⚠️ Common Issues</h4>
+                  <h4 style={{ margin: '0 0 10px', fontSize: '14px', color: '#b45309' }}>Common Issues</h4>
                   <ul style={{ margin: 0, paddingLeft: '20px' }}>
                     {page.commonIssues.map((issue, idx) => (
                       <li key={idx} style={{ fontSize: '13px', color: '#92400e', marginBottom: '6px' }}>{issue}</li>

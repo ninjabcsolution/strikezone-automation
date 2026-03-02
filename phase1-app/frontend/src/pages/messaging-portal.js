@@ -484,7 +484,7 @@ export default function MessagingPortal() {
                 onClick={() => setSelectedMessage(null)}
                 style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}
               >
-                ×
+                &times;
               </button>
             </div>
 

@@ -4,7 +4,7 @@ const icpProfileService = require('./icpProfileService');
 const scoringService = require('./scoringService');
 
 class TargetsService {
-  async createTarget(input, actor) {
+  async createTarget(input, actor, userId = null) {
     const source = input.source || 'manual';
     const segment = input.segment || null;
 
@@ -21,7 +21,7 @@ class TargetsService {
       notes: input.notes || null,
     };
 
-    const icp = await icpProfileService.getTop20Profile();
+    const icp = await icpProfileService.getTop20Profile(userId);
     const score = scoringService.scoreTarget({ target, icpProfile: icp });
 
     const result = await pool.query(
@@ -29,12 +29,12 @@ class TargetsService {
         company_name, domain, industry, naics, city, state, country,
         employee_count, annual_revenue,
         similarity_score, opportunity_score, tier, reason_codes,
-        source, status, notes, updated_by, segment
+        source, status, notes, updated_by, segment, user_id
       ) VALUES (
         $1,$2,$3,$4,$5,$6,$7,
         $8,$9,
         $10,$11,$12,$13,
-        $14,$15,$16,$17,$18
+        $14,$15,$16,$17,$18,$19
       )
       RETURNING *`,
       [
@@ -56,6 +56,7 @@ class TargetsService {
         target.notes,
         actor || null,
         segment,
+        userId,
       ]
     );
 
@@ -65,15 +66,28 @@ class TargetsService {
       action: 'target.created',
       entityType: 'lookalike_target',
       entityId: created.target_id,
-      details: { source },
+      details: { source, userId },
     });
 
     return created;
   }
 
-  async listTargets({ status, q, tier, source, segment, limit = 100, offset = 0 }) {
+  async listTargets({ status, q, tier, source, segment, limit = 100, offset = 0, userId = null }) {
+    // If no userId, return empty - require login for data access
+    if (!userId) {
+      return {
+        rows: [],
+        total: 0,
+        limit,
+        offset,
+        totalPages: 0,
+        page: 1
+      };
+    }
+    
     const params = [];
-    const where = [];
+    const where = ['user_id = $1'];
+    params.push(userId);
 
     if (status) {
       params.push(status);
@@ -100,7 +114,7 @@ class TargetsService {
       where.push(`(company_name ILIKE $${params.length} OR domain ILIKE $${params.length})`);
     }
 
-    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    const whereSql = `WHERE ${where.join(' AND ')}`;
     
     // Get total count
     const countResult = await pool.query(
@@ -131,12 +145,27 @@ class TargetsService {
     };
   }
 
-  async getTarget(targetId) {
+  async getTarget(targetId, userId = null) {
+    // If userId provided, filter by it for security
+    if (userId) {
+      const result = await pool.query('SELECT * FROM lookalike_targets WHERE target_id = $1 AND user_id = $2', [targetId, userId]);
+      return result.rows[0] || null;
+    }
     const result = await pool.query('SELECT * FROM lookalike_targets WHERE target_id = $1', [targetId]);
     return result.rows[0] || null;
   }
 
-  async updateTarget(targetId, patch, actor) {
+  async updateTarget(targetId, patch, actor, userId = null) {
+    // Verify ownership if userId provided
+    if (userId) {
+      const existing = await this.getTarget(targetId, userId);
+      if (!existing) {
+        const err = new Error('Target not found or access denied');
+        err.statusCode = 404;
+        throw err;
+      }
+    }
+    
     // Allowed updates for MVP
     const allowed = [
       'company_name',
@@ -193,12 +222,22 @@ class TargetsService {
     return updated;
   }
 
-  async approveTarget(targetId, { action, notes }, actor) {
+  async approveTarget(targetId, { action, notes }, actor, userId = null) {
     const validActions = new Set(['approved', 'rejected']);
     if (!validActions.has(action)) {
       const err = new Error('Invalid approval action. Use approved or rejected.');
       err.statusCode = 400;
       throw err;
+    }
+
+    // Verify ownership if userId provided
+    if (userId) {
+      const existing = await this.getTarget(targetId, userId);
+      if (!existing) {
+        const err = new Error('Target not found or access denied');
+        err.statusCode = 404;
+        throw err;
+      }
     }
 
     // Update target status
@@ -222,8 +261,8 @@ class TargetsService {
     return updated;
   }
 
-  async exportTargetsCsv({ status, tier, source, segment, q }) {
-    const result = await this.listTargets({ status, tier, source, segment, q, limit: 5000, offset: 0 });
+  async exportTargetsCsv({ status, tier, source, segment, q, userId = null }) {
+    const result = await this.listTargets({ status, tier, source, segment, q, limit: 5000, offset: 0, userId });
     const rows = result.rows;
 
     const headers = [
@@ -277,7 +316,15 @@ class TargetsService {
     return lines.join('\n');
   }
 
-  async listApprovals(targetId) {
+  async listApprovals(targetId, userId = null) {
+    // Verify ownership if userId provided
+    if (userId) {
+      const existing = await this.getTarget(targetId, userId);
+      if (!existing) {
+        return [];
+      }
+    }
+    
     const result = await pool.query(
       `SELECT * FROM target_approvals
        WHERE target_id = $1

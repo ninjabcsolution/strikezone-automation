@@ -1,6 +1,6 @@
 const express = require('express');
 const targetsService = require('../services/targetsService');
-const { optionalAuth } = require('../middleware/auth');
+const { optionalAuth, getUserIdFilter } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -14,6 +14,7 @@ function getActor(req) {
 // GET /api/targets?status=&tier=&q=&limit=&offset=&page=
 router.get('/', async (req, res) => {
   try {
+    const userId = getUserIdFilter(req);
     const status = req.query.status || undefined;
     const tier = req.query.tier || undefined;
     const source = req.query.source || undefined;
@@ -23,7 +24,7 @@ router.get('/', async (req, res) => {
     const page = req.query.page ? parseInt(req.query.page, 10) || 1 : 1;
     const offset = req.query.offset ? parseInt(req.query.offset, 10) : (page - 1) * limit;
 
-    const result = await targetsService.listTargets({ status, tier, source, segment, q, limit, offset });
+    const result = await targetsService.listTargets({ status, tier, source, segment, q, limit, offset, userId });
     res.json({ 
       status: 'success', 
       targets: result.rows, 
@@ -44,13 +45,14 @@ router.get('/', async (req, res) => {
 // GET /api/targets/export.csv
 router.get('/export.csv', async (req, res) => {
   try {
+    const userId = getUserIdFilter(req);
     const status = req.query.status || undefined;
     const tier = req.query.tier || undefined;
     const source = req.query.source || undefined;
     const segment = req.query.segment || undefined;
     const q = req.query.q || undefined;
 
-    const csv = await targetsService.exportTargetsCsv({ status, tier, source, segment, q });
+    const csv = await targetsService.exportTargetsCsv({ status, tier, source, segment, q, userId });
 
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename="targets.csv"');
@@ -65,7 +67,8 @@ router.get('/export.csv', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const actor = getActor(req);
-    const created = await targetsService.createTarget(req.body || {}, actor);
+    const userId = getUserIdFilter(req);
+    const created = await targetsService.createTarget(req.body || {}, actor, userId);
     res.status(201).json({ status: 'success', target: created });
   } catch (err) {
     const status = err.statusCode || 500;
@@ -76,8 +79,9 @@ router.post('/', async (req, res) => {
 // GET /api/targets/:id
 router.get('/:id', async (req, res) => {
   try {
+    const userId = getUserIdFilter(req);
     const targetId = parseInt(req.params.id, 10);
-    const target = await targetsService.getTarget(targetId);
+    const target = await targetsService.getTarget(targetId, userId);
     if (!target) return res.status(404).json({ error: 'Target not found' });
     res.json({ status: 'success', target });
   } catch (err) {
@@ -89,8 +93,9 @@ router.get('/:id', async (req, res) => {
 router.patch('/:id', async (req, res) => {
   try {
     const actor = getActor(req);
+    const userId = getUserIdFilter(req);
     const targetId = parseInt(req.params.id, 10);
-    const updated = await targetsService.updateTarget(targetId, req.body || {}, actor);
+    const updated = await targetsService.updateTarget(targetId, req.body || {}, actor, userId);
     res.json({ status: 'success', target: updated });
   } catch (err) {
     const status = err.statusCode || 500;
@@ -102,9 +107,10 @@ router.patch('/:id', async (req, res) => {
 router.post('/:id/approve', async (req, res) => {
   try {
     const actor = getActor(req);
+    const userId = getUserIdFilter(req);
     const targetId = parseInt(req.params.id, 10);
     const { action, notes } = req.body || {};
-    const updated = await targetsService.approveTarget(targetId, { action, notes }, actor);
+    const updated = await targetsService.approveTarget(targetId, { action, notes }, actor, userId);
     res.json({ status: 'success', target: updated });
   } catch (err) {
     const status = err.statusCode || 500;
@@ -115,8 +121,9 @@ router.post('/:id/approve', async (req, res) => {
 // GET /api/targets/:id/approvals
 router.get('/:id/approvals', async (req, res) => {
   try {
+    const userId = getUserIdFilter(req);
     const targetId = parseInt(req.params.id, 10);
-    const approvals = await targetsService.listApprovals(targetId);
+    const approvals = await targetsService.listApprovals(targetId, userId);
     res.json({ status: 'success', approvals });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch approvals', message: err.message });

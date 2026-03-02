@@ -1,7 +1,7 @@
 const express = require('express');
 const { pool } = require('../config/database');
 const apolloService = require('../services/apolloService');
-const { optionalAuth } = require('../middleware/auth');
+const { optionalAuth, getUserIdFilter } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -53,17 +53,29 @@ router.post('/enrich-person', async (req, res) => {
 router.post('/run', async (req, res) => {
   const client = await pool.connect();
   try {
+    const userId = getUserIdFilter(req);
     const { targetIds, titles = [], seniorities = [], maxContactsPerCompany = 5 } = req.body;
 
-    // Get approved lookalike targets with domains
+    // Get approved lookalike targets with domains (filtered by user)
     let companiesQuery = `
       SELECT lt.target_id as id, lt.company_name, lt.domain
       FROM lookalike_targets lt
       WHERE lt.status = 'approved' AND lt.domain IS NOT NULL
     `;
     const params = [];
+    let paramIndex = 1;
+    
+    // Filter by user_id
+    if (userId) {
+      companiesQuery += ` AND lt.user_id = $${paramIndex++}`;
+      params.push(userId);
+    } else {
+      // No user = no data
+      return res.status(400).json({ error: 'Authentication required for enrichment' });
+    }
+    
     if (targetIds && targetIds.length) {
-      companiesQuery += ` AND lt.target_id = ANY($1)`;
+      companiesQuery += ` AND lt.target_id = ANY($${paramIndex++})`;
       params.push(targetIds);
     }
     companiesQuery += ' LIMIT 100';
@@ -77,7 +89,8 @@ router.post('/run', async (req, res) => {
 
     // Create enrichment run
     const runRes = await client.query(
-      `INSERT INTO enrichment_runs (status, total_contacts, started_at) VALUES ('running', 0, NOW()) RETURNING id`
+      `INSERT INTO enrichment_runs (status, total_contacts, started_at, user_id) VALUES ('running', 0, NOW(), $1) RETURNING id`,
+      [userId]
     );
     const runId = runRes.rows[0].id;
 
@@ -104,8 +117,8 @@ router.post('/run', async (req, res) => {
               enrichment_run_id, target_id, apollo_id,
               first_name, last_name, full_name, email, email_status,
               title, seniority, departments, linkedin_url, phone,
-              company_name, company_domain, raw_data
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
+              company_name, company_domain, raw_data, user_id
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
             [
               runId,
               company.id,
@@ -123,6 +136,7 @@ router.post('/run', async (req, res) => {
               person.organization?.name || company.company_name,
               company.domain,
               JSON.stringify(person),
+              userId,
             ]
           );
           enrichedCount++;
@@ -151,8 +165,16 @@ router.post('/run', async (req, res) => {
 // GET /api/enrichment/runs - List enrichment runs
 router.get('/runs', async (req, res) => {
   try {
+    const userId = getUserIdFilter(req);
+    
+    // If no userId, return empty
+    if (!userId) {
+      return res.json({ runs: [] });
+    }
+    
     const result = await pool.query(
-      `SELECT * FROM enrichment_runs ORDER BY created_at DESC LIMIT 50`
+      `SELECT * FROM enrichment_runs WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50`,
+      [userId]
     );
     res.json({ runs: result.rows });
   } catch (err) {
@@ -164,14 +186,24 @@ router.get('/runs', async (req, res) => {
 // GET /api/enrichment/contacts - List enriched contacts
 router.get('/contacts', async (req, res) => {
   try {
+    const userId = getUserIdFilter(req);
+    
+    // If no userId, return empty
+    if (!userId) {
+      return res.json({ 
+        contacts: [],
+        pagination: { total: 0, page: 1, limit: 20, totalPages: 0, hasNext: false, hasPrev: false }
+      });
+    }
+    
     const { runId, companyId, targetId, limit: limitStr, page: pageStr } = req.query;
     const limit = limitStr ? Math.min(parseInt(limitStr, 10) || 20, 100) : 20;
     const page = pageStr ? parseInt(pageStr, 10) || 1 : 1;
     const offset = (page - 1) * limit;
 
-    let whereClause = '1=1';
-    const params = [];
-    let paramIndex = 1;
+    let whereClause = 'user_id = $1';
+    const params = [userId];
+    let paramIndex = 2;
 
     if (runId) {
       whereClause += ` AND enrichment_run_id = $${paramIndex++}`;
@@ -216,14 +248,23 @@ router.get('/contacts', async (req, res) => {
 // GET /api/enrichment/contacts/export - Export enriched contacts as CSV
 router.get('/contacts/export', async (req, res) => {
   try {
+    const userId = getUserIdFilter(req);
+    
+    // If no userId, return empty CSV
+    if (!userId) {
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename="enriched_contacts.csv"');
+      return res.send('Full Name,Email,Title,Company,Domain,Phone,LinkedIn\n');
+    }
+    
     const { runId, companyId, targetId } = req.query;
 
     let query = `SELECT ec.*, lt.company_name as target_company
       FROM enriched_contacts ec
       LEFT JOIN lookalike_targets lt ON ec.target_id = lt.target_id
-      WHERE 1=1`;
-    const params = [];
-    let paramIndex = 1;
+      WHERE ec.user_id = $1`;
+    const params = [userId];
+    let paramIndex = 2;
 
     if (runId) {
       query += ` AND ec.enrichment_run_id = $${paramIndex++}`;

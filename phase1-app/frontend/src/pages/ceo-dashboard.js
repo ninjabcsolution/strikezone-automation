@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { HiLightBulb, HiTrendingUp, HiOutlineLightningBolt } from 'react-icons/hi';
 import Layout from '../components/Layout';
 import { getApiUrl, authFetch } from '../utils/api';
+import { ChartIcon, TrendingUpIcon, TargetIcon, CrownIcon } from '../components/Icons';
 
 const getAPI_URL = () => typeof window !== 'undefined' ? getApiUrl() : 'http://localhost:5002';
 
@@ -147,7 +148,7 @@ export default function CEODashboard() {
 
       {/* Top Customers Table */}
       <div style={styles.tableCard}>
-        <h2 style={styles.tableTitle}>🏆 Top 10 Elite Customers</h2>
+        <h2 style={styles.tableTitle}><CrownIcon size={24} color="#f59e0b" style={{marginRight: '8px'}} /> Top 10 Elite Customers</h2>
         <div style={styles.tableContainer}>
           <table style={styles.table}>
             <thead>
@@ -188,7 +189,7 @@ export default function CEODashboard() {
       {comparison && (
         <div style={styles.comparisonCard}>
           <div style={styles.comparisonHeader}>
-            <h2 style={styles.comparisonTitle}>📊 Top 20% vs 80% Comparison</h2>
+            <h2 style={styles.comparisonTitle}><ChartIcon size={24} style={{marginRight: '8px'}} /> Top 20% vs 80% Comparison</h2>
             <div style={styles.toggleContainer}>
               <span style={styles.toggleLabel}>Rank by:</span>
               <button 
@@ -209,7 +210,7 @@ export default function CEODashboard() {
           {/* Side by Side Metrics */}
           <div style={styles.comparisonGrid}>
             <div style={styles.comparisonGroup}>
-              <div style={styles.groupLabel}>🏆 TOP 20%</div>
+              <div style={styles.groupLabel}><CrownIcon size={14} color="#fff" style={{marginRight: '4px'}} /> TOP 20%</div>
               <div style={styles.metricRow}>
                 <span>Customers:</span>
                 <strong>{comparison.top20?.count || 0}</strong>
@@ -235,7 +236,7 @@ export default function CEODashboard() {
             <div style={styles.vsCircle}>VS</div>
             
             <div style={styles.comparisonGroup}>
-              <div style={{...styles.groupLabel, background: '#95a5a6'}}>📊 OTHERS (80%)</div>
+              <div style={{...styles.groupLabel, background: '#95a5a6'}}><ChartIcon size={14} color="#fff" style={{marginRight: '4px'}} /> OTHERS (80%)</div>
               <div style={styles.metricRow}>
                 <span>Customers:</span>
                 <strong>{comparison.others?.count || 0}</strong>
@@ -262,7 +263,7 @@ export default function CEODashboard() {
           {/* Key Differentiators */}
           {comparison.differentiators && comparison.differentiators.length > 0 && (
             <div style={styles.differentiators}>
-              <h3 style={styles.diffTitle}>🔍 Key Differentiators</h3>
+              <h3 style={styles.diffTitle}>Key Differentiators</h3>
               <ul style={styles.diffList}>
                 {comparison.differentiators.map((diff, idx) => (
                   <li key={idx} style={styles.diffItem}>{diff}</li>
@@ -274,7 +275,7 @@ export default function CEODashboard() {
           {/* Industry Distribution */}
           {comparison.industries && comparison.industries.length > 0 && (
             <div style={styles.industrySection}>
-              <h3 style={styles.diffTitle}>🏭 Top Industries</h3>
+              <h3 style={styles.diffTitle}>Top Industries</h3>
               <div style={styles.industryGrid}>
                 {comparison.industries.slice(0, 5).map((ind, idx) => (
                   <div key={idx} style={styles.industryItem}>
@@ -294,7 +295,7 @@ export default function CEODashboard() {
       {/* CAGR Analysis Section */}
       {cagrAnalysis && cagrAnalysis.summary && (
         <div style={styles.cagrCard}>
-          <h2 style={styles.tableTitle}>📈 3-Year Growth Analysis (CAGR)</h2>
+          <h2 style={styles.tableTitle}><TrendingUpIcon size={24} style={{marginRight: '8px'}} /> 3-Year Growth Analysis (CAGR)</h2>
           <div style={styles.cagrSummary}>
             <div style={styles.cagrStat}>
               <div style={styles.cagrValue}>{cagrAnalysis.summary.consistentGrowers}</div>
@@ -335,7 +336,7 @@ export default function CEODashboard() {
         
         <div style={styles.insightCard}>
           <div style={styles.insightIconWrap}>
-            <span style={{fontSize: '28px'}}>🎯</span>
+            <TargetIcon size={28} />
           </div>
           <h3 style={styles.insightTitle}>Next Steps</h3>
           <p style={styles.insightText}>
