@@ -46,6 +46,9 @@ export default function ApprovalPortal() {
   const [winbackLimit, setWinbackLimit] = useState(200);
   const [winbackLoading, setWinbackLoading] = useState(false);
 
+  const [enrichmentLoading, setEnrichmentLoading] = useState(false);
+  const [enrichmentMaxContacts, setEnrichmentMaxContacts] = useState(5);
+
   const [pbiJsonText, setPbiJsonText] = useState('');
   const [pbiImporting, setPbiImporting] = useState(false);
   const [pbiCsvFile, setPbiCsvFile] = useState(null);
@@ -171,6 +174,25 @@ export default function ApprovalPortal() {
       setError(e.message);
     } finally {
       setWinbackLoading(false);
+    }
+  };
+
+  const handleRunEnrichment = async () => {
+    setEnrichmentLoading(true);
+    setError(null);
+    try {
+      const res = await authFetch(`${getAPI_URL()}/api/enrichment/run`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Actor': actor },
+        body: JSON.stringify({ maxContactsPerCompany: Number(enrichmentMaxContacts) }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || data?.message || 'Failed to run enrichment');
+      toast.success(`Enrichment complete! Enriched: ${data.enrichedCount}, Failed: ${data.failedCount}, Companies: ${data.companiesProcessed}`);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setEnrichmentLoading(false);
     }
   };
 
@@ -333,6 +355,34 @@ export default function ApprovalPortal() {
         </div>
         <div style={styles.hint}>
           Creates targets from existing customers who have been inactive for N days but were historically high-margin.
+        </div>
+      </section>
+
+      <section style={styles.card}>
+        <h2 style={styles.sectionTitle}>Run Contact Enrichment</h2>
+        <div style={styles.row}>
+          <label style={styles.label}>Max contacts per company</label>
+          <input
+            type="number"
+            value={enrichmentMaxContacts}
+            onChange={(e) => setEnrichmentMaxContacts(e.target.value)}
+            style={{ ...styles.input, maxWidth: 100 }}
+            min={1}
+            max={25}
+          />
+          <button
+            onClick={handleRunEnrichment}
+            disabled={enrichmentLoading}
+            style={{ ...styles.button, background: enrichmentLoading ? '#999' : '#9B59B6' }}
+          >
+            {enrichmentLoading ? 'Enriching…' : 'Run Enrichment'}
+          </button>
+        </div>
+        <div style={styles.hint}>
+          Enriches <strong>approved targets with domains</strong> to find contacts at those companies using Apollo.io API.
+          <br />
+          Requires <code>APOLLO_API_KEY</code> in <code>backend/.env</code>. 
+          Contacts will appear in the <strong>Messaging Portal</strong>.
         </div>
       </section>
 

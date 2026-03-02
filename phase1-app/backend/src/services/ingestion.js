@@ -21,16 +21,10 @@ class IngestionService {
       
       for (const record of records) {
         try {
+          // Simple INSERT since we deleted existing records for this user
           await client.query(`
             INSERT INTO customers (customer_id, customer_name, industry, naics, city, state, country, employee_count, annual_revenue, user_id)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-            ON CONFLICT (customer_id) 
-            DO UPDATE SET 
-              customer_name = EXCLUDED.customer_name, 
-              industry = EXCLUDED.industry, 
-              user_id = EXCLUDED.user_id,
-              updated_at = CURRENT_TIMESTAMP
-            WHERE customers.user_id = EXCLUDED.user_id OR customers.user_id IS NULL
           `, [
             record.customer_id, 
             record.customer_name, 
@@ -80,15 +74,10 @@ class IngestionService {
       for (const record of records) {
         try {
           const grossMargin = record.gross_margin || (record.order_revenue && record.order_cogs ? record.order_revenue - record.order_cogs : null);
+          // Simple INSERT since we deleted existing records for this user
           await client.query(`
             INSERT INTO orders (order_id, order_date, customer_id, order_revenue, order_cogs, gross_margin, user_id)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
-            ON CONFLICT (order_id) 
-            DO UPDATE SET 
-              order_date = EXCLUDED.order_date, 
-              order_revenue = EXCLUDED.order_revenue,
-              user_id = EXCLUDED.user_id
-            WHERE orders.user_id = EXCLUDED.user_id OR orders.user_id IS NULL
           `, [
             record.order_id, 
             record.order_date, 
@@ -134,14 +123,10 @@ class IngestionService {
       
       for (const record of records) {
         try {
+          // Simple INSERT since we deleted existing records for this user
           await client.query(`
             INSERT INTO order_lines (order_line_id, order_id, customer_id, order_date, product_id, product_category, quantity, line_revenue, line_cogs, user_id)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-            ON CONFLICT (order_line_id) 
-            DO UPDATE SET 
-              order_id = EXCLUDED.order_id,
-              user_id = EXCLUDED.user_id
-            WHERE order_lines.user_id = EXCLUDED.user_id OR order_lines.user_id IS NULL
           `, [
             record.order_line_id, 
             record.order_id, 
@@ -190,14 +175,10 @@ class IngestionService {
       
       for (const record of records) {
         try {
+          // Simple INSERT since we deleted existing records for this user
           await client.query(`
             INSERT INTO products (product_id, product_name, product_category, user_id)
             VALUES ($1, $2, $3, $4)
-            ON CONFLICT (product_id) 
-            DO UPDATE SET 
-              product_name = EXCLUDED.product_name,
-              user_id = EXCLUDED.user_id
-            WHERE products.user_id = EXCLUDED.user_id OR products.user_id IS NULL
           `, [
             record.product_id, 
             record.product_name, 

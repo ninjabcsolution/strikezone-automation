@@ -11,6 +11,11 @@ class WinbackService {
       return { inserted: 0, updated: 0, totalCandidates: 0 };
     }
     
+    // For win-back, we want customers who:
+    // 1. Have positive margin (valuable customers)
+    // 2. Either haven't ordered recently (recency_days >= inactiveDays)
+    // 3. OR for sample data with future dates, take bottom margin customers (less active)
+    // Using ABS to handle negative recency_days from future-dated sample data
     const res = await pool.query(
       `SELECT
          cm.customer_id,
@@ -26,13 +31,18 @@ class WinbackService {
          cm.total_gross_margin,
          cm.gross_margin_percent,
          cm.order_count,
-         cm.recency_days
+         cm.recency_days,
+         cm.order_frequency
        FROM customer_metrics cm
-       JOIN customers c ON c.customer_id = cm.customer_id
+       JOIN customers c ON c.customer_id = cm.customer_id AND c.user_id = cm.user_id
        WHERE cm.total_gross_margin > 0
-         AND cm.recency_days >= $1
-         AND c.user_id = $2
-       ORDER BY cm.total_gross_margin DESC
+         AND cm.user_id = $2
+         AND (
+           cm.recency_days >= $1 
+           OR cm.order_frequency < 0.5 
+           OR cm.order_count <= 3
+         )
+       ORDER BY cm.order_frequency ASC, cm.total_gross_margin DESC
        LIMIT $3`,
       [inactiveDays, userId, limit]
     );

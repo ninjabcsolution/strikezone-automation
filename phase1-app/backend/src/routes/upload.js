@@ -50,7 +50,7 @@ router.post('/', upload.single('file'), async (req, res) => {
 
     const filePath = req.file.path;
     const fileName = req.file.originalname;
-    const userId = req.userId || null; // Get user ID from auth middleware
+    const userId = getUserIdFilter(req); // Get user ID from auth middleware
     
     const records = await csvParser.parseCSV(filePath);
     
@@ -122,7 +122,7 @@ router.post('/', upload.single('file'), async (req, res) => {
 
 router.get('/logs', async (req, res) => {
   try {
-    const userId = req.userId;
+    const userId = getUserIdFilter(req);
     let query = 'SELECT * FROM ingestion_logs';
     let params = [];
     
@@ -144,7 +144,7 @@ router.get('/logs', async (req, res) => {
 // Check upload status - returns row counts for each table (filtered by user)
 router.get('/status', async (req, res) => {
   try {
-    const userId = req.userId;
+    const userId = getUserIdFilter(req);
     const tables = ['customers', 'products', 'orders', 'order_lines'];
     const status = {};
     

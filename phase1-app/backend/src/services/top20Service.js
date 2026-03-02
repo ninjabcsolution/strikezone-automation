@@ -154,7 +154,7 @@ class Top20Service {
         cm.growth_trend, cm.is_top_20, cm.is_top_20_by_cagr,
         cm.total_revenue, cm.total_gross_margin
       FROM customer_metrics cm
-      JOIN customers c ON cm.customer_id = c.customer_id ${userId ? 'AND c.user_id = cm.user_id' : ''}
+      JOIN customers c ON cm.customer_id = c.customer_id AND c.user_id = cm.user_id
       ${whereClause}
       ORDER BY cm.cagr_3yr DESC NULLS LAST
       LIMIT $${paramNum}
@@ -244,7 +244,7 @@ class Top20Service {
         COUNT(*) FILTER (WHERE cm.${isTop20Field} = true) as top20_count,
         COUNT(*) FILTER (WHERE cm.${isTop20Field} = false OR cm.${isTop20Field} IS NULL) as others_count
       FROM customer_metrics cm
-      JOIN customers c ON cm.customer_id = c.customer_id ${userId ? 'AND c.user_id = cm.user_id' : ''}
+      JOIN customers c ON cm.customer_id = c.customer_id AND c.user_id = cm.user_id
       WHERE c.industry IS NOT NULL AND c.industry <> '' ${userWhere}
       GROUP BY c.industry
       ORDER BY top20_count DESC
@@ -258,7 +258,7 @@ class Top20Service {
         COUNT(*) FILTER (WHERE cm.${isTop20Field} = true) as top20_count,
         COUNT(*) FILTER (WHERE cm.${isTop20Field} = false OR cm.${isTop20Field} IS NULL) as others_count
       FROM customer_metrics cm
-      JOIN customers c ON cm.customer_id = c.customer_id ${userId ? 'AND c.user_id = cm.user_id' : ''}
+      JOIN customers c ON cm.customer_id = c.customer_id AND c.user_id = cm.user_id
       WHERE c.state IS NOT NULL AND c.state <> '' ${userWhere}
       GROUP BY c.state
       ORDER BY top20_count DESC
@@ -515,7 +515,7 @@ class Top20Service {
     const result = await pool.query(`
       SELECT cm.*, c.customer_name, c.industry, c.state, c.city
       FROM customer_metrics cm
-      JOIN customers c ON cm.customer_id = c.customer_id ${userId ? 'AND c.user_id = cm.user_id' : ''}
+      JOIN customers c ON cm.customer_id = c.customer_id AND c.user_id = cm.user_id
       ${whereClause}
       ORDER BY cm.total_gross_margin DESC
       LIMIT $1

@@ -87,11 +87,8 @@ class ICPTraitsService {
         return res.rows.length;
       };
 
-      // Build user filter for JOINs
+      // Build user filter for JOINs - always need user_id in JOINs for composite keys
       const cmUserJoin = userId ? 'AND cm.user_id = $1' : '';
-      const cUserJoin = userId ? 'AND c.user_id = cm.user_id' : '';
-      const oUserJoin = userId ? 'AND o.user_id = cm.user_id' : '';
-      const olUserJoin = userId ? 'AND ol.user_id = cm.user_id' : '';
 
       const insertedIndustry = await insertFrom({
         category: 'firmographic',
@@ -100,7 +97,7 @@ class ICPTraitsService {
           WITH base AS (
             SELECT cm.is_top_20, c.industry AS trait_value
             FROM customer_metrics cm
-            JOIN customers c ON c.customer_id = cm.customer_id ${cUserJoin}
+            JOIN customers c ON c.customer_id = cm.customer_id AND c.user_id = cm.user_id
             WHERE c.industry IS NOT NULL AND c.industry <> '' ${cmUserJoin}
           )
           SELECT trait_value,
@@ -120,7 +117,7 @@ class ICPTraitsService {
           WITH base AS (
             SELECT cm.is_top_20, c.state AS trait_value
             FROM customer_metrics cm
-            JOIN customers c ON c.customer_id = cm.customer_id ${cUserJoin}
+            JOIN customers c ON c.customer_id = cm.customer_id AND c.user_id = cm.user_id
             WHERE c.state IS NOT NULL AND c.state <> '' ${cmUserJoin}
           )
           SELECT trait_value,
@@ -140,7 +137,7 @@ class ICPTraitsService {
           WITH base AS (
             SELECT cm.is_top_20, c.naics AS trait_value
             FROM customer_metrics cm
-            JOIN customers c ON c.customer_id = cm.customer_id ${cUserJoin}
+            JOIN customers c ON c.customer_id = cm.customer_id AND c.user_id = cm.user_id
             WHERE c.naics IS NOT NULL AND c.naics <> '' ${cmUserJoin}
           )
           SELECT trait_value,
@@ -165,8 +162,8 @@ class ICPTraitsService {
               cm.customer_id,
               ol.product_category AS trait_value
             FROM customer_metrics cm
-            JOIN orders o ON o.customer_id = cm.customer_id ${oUserJoin}
-            JOIN order_lines ol ON ol.order_id = o.order_id ${olUserJoin}
+            JOIN orders o ON o.customer_id = cm.customer_id AND o.user_id = cm.user_id
+            JOIN order_lines ol ON ol.order_id = o.order_id AND ol.user_id = o.user_id
             WHERE ol.product_category IS NOT NULL AND ol.product_category <> '' ${cmUserJoin}
           )
           SELECT trait_value,
