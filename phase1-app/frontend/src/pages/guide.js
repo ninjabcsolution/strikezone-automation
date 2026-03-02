@@ -506,13 +506,33 @@ const pageGuides = [
         description: 'Marks company as rejected/not a fit.',
         howToUse: 'Click for companies that don\'t fit (competitor, too small, wrong industry, etc.).',
       },
+      {
+        name: 'Run Contact Enrichment Section',
+        type: 'Action Panel (Purple)',
+        description: 'Enriches approved targets with domains to find contact information using Apollo.io API.',
+        howToUse: 'Set max contacts per company, click "Run Enrichment". Requires APOLLO_API_KEY and approved targets with domains.',
+      },
+      {
+        name: 'Max contacts per company Input',
+        type: 'Number Input',
+        description: 'How many contacts to find at each company (1-25).',
+        howToUse: 'Enter a number like 5. Higher numbers give more contacts but use more API credits.',
+      },
+      {
+        name: 'Run Enrichment Button',
+        type: 'Button (Purple)',
+        description: 'Starts the enrichment process to find contacts at approved companies.',
+        howToUse: 'Click after approving targets. Contacts will appear in Messaging Portal.',
+      },
     ],
     
-    expectedResults: 'A clean list of approved target companies ready for your sales team.',
+    expectedResults: 'A clean list of approved target companies ready for your sales team. After enrichment, contacts are available in Messaging Portal.',
     
     commonIssues: [
       'No targets: Generate some from Lookalike Search or import from Power BI first.',
       'Can\'t see approved: Change the Status filter to "Approved" or "All".',
+      'Enrichment fails: Make sure APOLLO_API_KEY is set in backend/.env and targets have domain values.',
+      'No contacts after enrichment: Check that approved targets have valid company domains.',
     ],
   },
   {
@@ -521,7 +541,7 @@ const pageGuides = [
     color: '#ec4899',
     phase: 'Step 6',
     
-    overview: `Generate AI-written personalized messages (emails, LinkedIn, call scripts) for your approved target contacts.`,
+    overview: `Generate AI-written personalized messages (emails, LinkedIn, call scripts) for your approved target contacts. Contacts come from the enrichment process run in the Approval Portal.`,
     
     uiElements: [
       {
@@ -557,8 +577,14 @@ const pageGuides = [
       {
         name: 'Contact Selection List',
         type: 'Checkbox List',
-        description: 'List of contacts with checkboxes.',
-        howToUse: 'Check boxes next to contacts you want to generate messages for.',
+        description: 'List of contacts with checkboxes. These contacts come from the enrichment process.',
+        howToUse: 'Check boxes next to contacts you want to generate messages for. If empty, run enrichment in Approval Portal first.',
+      },
+      {
+        name: 'No Contacts Message',
+        type: 'Info Message',
+        description: 'Shows instructions when no contacts are available.',
+        howToUse: 'Follow the steps: Go to Approval Portal → Approve targets with domains → Click Run Enrichment.',
       },
       {
         name: 'Select All Button',
@@ -655,7 +681,8 @@ const pageGuides = [
     expectedResults: 'Personalized, approved messages ready to be sent to prospects.',
     
     commonIssues: [
-      'No contacts: Run contact enrichment first to get contacts at target companies.',
+      'No contacts showing: Go to Approval Portal → Approve targets with domains → Click "Run Enrichment" button.',
+      'Enrichment required: Contacts are populated by the enrichment process, not automatically.',
       'AI errors: Check that OPENAI_API_KEY is configured in backend/.env.',
       'Messages too generic: Add custom instructions for more personalization.',
     ],
@@ -668,7 +695,7 @@ const workflowSteps = [
   { step: 2, title: 'Analyze Top 20%', page: '/ceo-dashboard', color: '#2563eb' },
   { step: 3, title: 'Extract ICP', page: '/icp-dashboard', color: '#10b981' },
   { step: 4, title: 'Find Lookalikes', page: '/lookalike-search', color: '#8b5cf6' },
-  { step: 5, title: 'Approve Targets', page: '/approval-portal', color: '#f59e0b' },
+  { step: 5, title: 'Approve & Enrich', page: '/approval-portal', color: '#f59e0b' },
   { step: 6, title: 'Generate Messages', page: '/messaging-portal', color: '#ec4899' },
 ];
 
