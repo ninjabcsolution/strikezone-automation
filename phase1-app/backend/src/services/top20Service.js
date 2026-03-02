@@ -15,30 +15,41 @@ class Top20Service {
     const client = await pool.connect();
     try {
       // Get the most recent year in the data (for this user)
-      let yearQuery = 'SELECT EXTRACT(YEAR FROM MAX(order_date))::INTEGER as max_year FROM orders';
+      // Try order_lines first (has more data), fallback to orders
+      let yearQuery = 'SELECT EXTRACT(YEAR FROM MAX(order_date))::INTEGER as max_year FROM order_lines';
       let yearParams = [];
       if (userId) {
         yearQuery += ' WHERE user_id = $1';
         yearParams = [userId];
       }
-      const yearResult = await client.query(yearQuery, yearParams);
-      const currentYear = yearResult.rows[0]?.max_year || new Date().getFullYear();
+      let yearResult = await client.query(yearQuery, yearParams);
+      let currentYear = yearResult.rows[0]?.max_year;
       
-      // Calculate yearly revenue and margin per customer (filtered by user)
-      const userWhere = userId ? 'WHERE o.user_id = $2' : '';
+      // If no order_lines data, try orders table
+      if (!currentYear) {
+        yearQuery = 'SELECT EXTRACT(YEAR FROM MAX(order_date))::INTEGER as max_year FROM orders';
+        if (userId) {
+          yearQuery += ' WHERE user_id = $1';
+        }
+        yearResult = await client.query(yearQuery, yearParams);
+        currentYear = yearResult.rows[0]?.max_year || new Date().getFullYear();
+      }
+      
+      // Calculate yearly revenue and margin per customer using order_lines (filtered by user)
+      const userWhere = userId ? 'WHERE ol.user_id = $2' : '';
       const params = userId ? [currentYear, userId] : [currentYear];
       
       await client.query(`
         WITH yearly_data AS (
           SELECT 
             customer_id,
-            SUM(CASE WHEN EXTRACT(YEAR FROM order_date) = $1 - 2 THEN order_revenue ELSE 0 END) as rev_y1,
-            SUM(CASE WHEN EXTRACT(YEAR FROM order_date) = $1 - 1 THEN order_revenue ELSE 0 END) as rev_y2,
-            SUM(CASE WHEN EXTRACT(YEAR FROM order_date) = $1 THEN order_revenue ELSE 0 END) as rev_y3,
-            SUM(CASE WHEN EXTRACT(YEAR FROM order_date) = $1 - 2 THEN gross_margin ELSE 0 END) as margin_y1,
-            SUM(CASE WHEN EXTRACT(YEAR FROM order_date) = $1 - 1 THEN gross_margin ELSE 0 END) as margin_y2,
-            SUM(CASE WHEN EXTRACT(YEAR FROM order_date) = $1 THEN gross_margin ELSE 0 END) as margin_y3
-          FROM orders o
+            SUM(CASE WHEN EXTRACT(YEAR FROM order_date) = $1 - 2 THEN line_revenue ELSE 0 END) as rev_y1,
+            SUM(CASE WHEN EXTRACT(YEAR FROM order_date) = $1 - 1 THEN line_revenue ELSE 0 END) as rev_y2,
+            SUM(CASE WHEN EXTRACT(YEAR FROM order_date) = $1 THEN line_revenue ELSE 0 END) as rev_y3,
+            SUM(CASE WHEN EXTRACT(YEAR FROM order_date) = $1 - 2 THEN (line_revenue - COALESCE(line_cogs, 0)) ELSE 0 END) as margin_y1,
+            SUM(CASE WHEN EXTRACT(YEAR FROM order_date) = $1 - 1 THEN (line_revenue - COALESCE(line_cogs, 0)) ELSE 0 END) as margin_y2,
+            SUM(CASE WHEN EXTRACT(YEAR FROM order_date) = $1 THEN (line_revenue - COALESCE(line_cogs, 0)) ELSE 0 END) as margin_y3
+          FROM order_lines ol
           ${userWhere}
           GROUP BY customer_id
         )
@@ -52,13 +63,13 @@ class Top20Service {
           margin_year_3 = COALESCE(yd.margin_y3, 0),
           cagr_3yr = CASE 
             WHEN yd.rev_y1 > 0 AND yd.rev_y3 > 0 
-            THEN POWER(yd.rev_y3 / yd.rev_y1, 1.0/3.0) - 1
+            THEN POWER(yd.rev_y3 / yd.rev_y1, 1.0/2.0) - 1
             WHEN yd.rev_y1 = 0 AND yd.rev_y3 > 0 THEN 1.0
             ELSE NULL
           END,
           margin_cagr_3yr = CASE 
             WHEN yd.margin_y1 > 0 AND yd.margin_y3 > 0 
-            THEN POWER(yd.margin_y3 / yd.margin_y1, 1.0/3.0) - 1
+            THEN POWER(yd.margin_y3 / yd.margin_y1, 1.0/2.0) - 1
             ELSE NULL
           END,
           is_consistent_grower = (yd.rev_y3 > yd.rev_y2 AND yd.rev_y2 > yd.rev_y1 AND yd.rev_y1 > 0),

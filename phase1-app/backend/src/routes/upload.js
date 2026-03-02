@@ -6,6 +6,7 @@ const crypto = require('crypto');
 const csvParser = require('../services/csvParser');
 const validator = require('../services/validator');
 const ingestionService = require('../services/ingestion');
+const top20Service = require('../services/top20Service');
 const { pool } = require('../config/database');
 const { optionalAuth, getUserIdFilter } = require('../middleware/auth');
 
@@ -104,6 +105,23 @@ router.post('/', upload.single('file'), async (req, res) => {
     await ingestionService.logIngestion(fileType, fileName, validationResult.totalRows, ingestionResult.inserted, ingestionResult.failed, ingestionResult.errors, 'success', userId);
     fs.unlinkSync(filePath);
 
+    // Auto-calculate metrics and CAGR after order_lines upload (most detailed data)
+    let metricsCalculated = false;
+    let cagrCalculated = false;
+    if (fileType === 'order_lines' && userId) {
+      try {
+        console.log(`Auto-calculating metrics for user ${userId}...`);
+        await top20Service.calculateCustomerMetrics(userId);
+        metricsCalculated = true;
+        console.log(`Auto-calculating CAGR for user ${userId}...`);
+        await top20Service.calculateCAGR(userId);
+        cagrCalculated = true;
+        console.log(`Metrics and CAGR calculation complete for user ${userId}`);
+      } catch (metricsError) {
+        console.error('Auto-calculate metrics/CAGR error:', metricsError);
+      }
+    }
+
     res.json({
       status: 'success',
       fileType,
@@ -112,6 +130,8 @@ router.post('/', upload.single('file'), async (req, res) => {
       ingestion: { inserted: ingestionResult.inserted, failed: ingestionResult.failed, errors: ingestionResult.errors },
       qaReport,
       userId, // Return user ID for debugging
+      metricsCalculated,
+      cagrCalculated,
     });
   } catch (error) {
     console.error('Upload error:', error);

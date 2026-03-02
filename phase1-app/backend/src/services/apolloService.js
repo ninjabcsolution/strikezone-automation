@@ -93,6 +93,9 @@ class ApolloService {
       q_organization_domains: organizationDomains.length ? organizationDomains.join('\n') : undefined,
     };
 
+    console.log('[Apollo People Search] URL:', url);
+    console.log('[Apollo People Search] Body:', JSON.stringify(body));
+    
     const resp = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Api-Key': apiKey },
@@ -100,6 +103,12 @@ class ApolloService {
     });
 
     const data = await resp.json().catch(() => ({}));
+    
+    console.log('[Apollo People Search] Response status:', resp.status);
+    console.log('[Apollo People Search] People found:', data?.people?.length || 0);
+    if (data?.error || data?.message) {
+      console.log('[Apollo People Search] Error/Message:', data.error || data.message);
+    }
 
     if (!resp.ok) {
       await auditLogService.log({ actor, action: 'apollo.people_search.failed', entityType: 'apollo', details: { status: resp.status, body: data } });

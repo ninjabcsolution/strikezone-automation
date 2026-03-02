@@ -1,6 +1,18 @@
 const { pool } = require('../config/database');
 const auditLogService = require('./auditLogService');
 
+// Helper to generate domain from company name
+function generateDomain(companyName) {
+  if (!companyName) return null;
+  // Remove common suffixes and clean up
+  const cleaned = companyName
+    .toLowerCase()
+    .replace(/\s+(inc|llc|ltd|corp|co|company|corporation|enterprises|solutions|services|group|industries|manufacturing)\.?$/i, '')
+    .replace(/[^a-z0-9]+/g, '') // Remove special chars
+    .trim();
+  return cleaned ? `${cleaned}.com` : null;
+}
+
 // Phase 2C (win-back targeting):
 // Find customers that were historically valuable but have not ordered in N days.
 // Output is stored into lookalike_targets with source='winback'.
@@ -51,23 +63,27 @@ class WinbackService {
     let updated = 0;
 
     for (const r of res.rows) {
+      // Generate domain from company name for enrichment
+      const domain = generateDomain(r.customer_name);
+      
       // Use customer_id as the stable external id
       const result = await pool.query(
         `INSERT INTO lookalike_targets (
-          company_name, industry, naics, city, state, country,
+          company_name, domain, industry, naics, city, state, country,
           employee_count, annual_revenue,
           similarity_score, opportunity_score, tier, reason_codes,
           source, source_external_id, external_data, status, segment, user_id
         ) VALUES (
-          $1,$2,$3,$4,$5,$6,
-          $7,$8,
-          $9,$10,$11,$12,
-          $13,$14,$15,$16,$17,$18
+          $1,$2,$3,$4,$5,$6,$7,
+          $8,$9,
+          $10,$11,$12,$13,
+          $14,$15,$16,$17,$18,$19
         )
-        ON CONFLICT (source, source_external_id)
+        ON CONFLICT (source, source_external_id, user_id)
         WHERE source_external_id IS NOT NULL
         DO UPDATE SET
           company_name = EXCLUDED.company_name,
+          domain = COALESCE(EXCLUDED.domain, lookalike_targets.domain),
           industry = EXCLUDED.industry,
           naics = EXCLUDED.naics,
           city = EXCLUDED.city,
@@ -80,6 +96,7 @@ class WinbackService {
         RETURNING target_id, (xmax = 0) AS inserted`,
         [
           r.customer_name,
+          domain,
           r.industry,
           r.naics,
           r.city,

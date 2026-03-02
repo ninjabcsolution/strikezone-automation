@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { HiLightBulb, HiTrendingUp, HiOutlineLightningBolt } from 'react-icons/hi';
+import { HiLightBulb, HiTrendingUp, HiOutlineLightningBolt, HiRefresh } from 'react-icons/hi';
 import Layout from '../components/Layout';
 import { getApiUrl, authFetch } from '../utils/api';
 import { ChartIcon, TrendingUpIcon, TargetIcon, CrownIcon } from '../components/Icons';
@@ -12,6 +12,7 @@ export default function CEODashboard() {
   const [comparison, setComparison] = useState(null);
   const [cagrAnalysis, setCagrAnalysis] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [calculating, setCalculating] = useState(false);
   const [rankBy, setRankBy] = useState('margin');
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -71,6 +72,27 @@ export default function CEODashboard() {
     }
   };
 
+  const handleRecalculate = async () => {
+    if (calculating) return;
+    setCalculating(true);
+    try {
+      const API_URL = getAPI_URL();
+      const res = await authFetch(`${API_URL}/api/analytics/calculate-all`, { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        console.log('Metrics recalculated:', data);
+        // Refresh all data after recalculation
+        await fetchData();
+      } else {
+        console.error('Failed to recalculate metrics');
+      }
+    } catch (error) {
+      console.error('Recalculate error:', error);
+    } finally {
+      setCalculating(false);
+    }
+  };
+
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(value || 0);
   };
@@ -96,7 +118,16 @@ export default function CEODashboard() {
             <h1 style={styles.title}>Strikezone Intelligence</h1>
             <p style={styles.subtitle}>Data-Driven Customer Insights</p>
           </div>
-          <button style={styles.refreshBtn} onClick={fetchData}>↻ Refresh</button>
+          <div style={styles.headerBtns}>
+            <button style={styles.recalculateBtn} onClick={handleRecalculate} disabled={calculating}>
+              {calculating ? (
+                <>Calculating...</>
+              ) : (
+                <><HiRefresh style={{marginRight: '6px', verticalAlign: 'middle'}} /> Recalculate Metrics</>
+              )}
+            </button>
+            <button style={styles.refreshBtn} onClick={fetchData}>↻ Refresh</button>
+          </div>
         </div>
 
       {/* Hero KPI - Top 20% Contribution */}
@@ -397,6 +428,10 @@ const styles = {
     color: 'rgba(255,255,255,0.9)',
     margin: '5px 0 0 0',
   },
+  headerBtns: {
+    display: 'flex',
+    gap: '12px',
+  },
   refreshBtn: {
     padding: '12px 24px',
     background: 'rgba(255,255,255,0.2)',
@@ -407,6 +442,17 @@ const styles = {
     cursor: 'pointer',
     fontWeight: '600',
     backdropFilter: 'blur(10px)',
+  },
+  recalculateBtn: {
+    padding: '12px 24px',
+    background: 'linear-gradient(135deg, #27AE60, #2ECC71)',
+    border: 'none',
+    borderRadius: '8px',
+    color: 'white',
+    fontSize: '14px',
+    cursor: 'pointer',
+    fontWeight: '600',
+    boxShadow: '0 4px 12px rgba(39, 174, 96, 0.3)',
   },
   heroCard: {
     background: 'linear-gradient(135deg, #E74C3C 0%, #C0392B 100%)',
