@@ -335,7 +335,7 @@ class LookalikeGenerationService {
        ) VALUES (
           $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18
        )
-       ON CONFLICT (source, source_external_id)
+       ON CONFLICT (source, source_external_id, user_id)
        WHERE source_external_id IS NOT NULL
        DO UPDATE SET
           company_name = EXCLUDED.company_name,
@@ -447,7 +447,7 @@ class LookalikeGenerationService {
             $10,$11,$12,$13,
             $14,$15,$16,$17,$18
          )
-         ON CONFLICT (source, source_external_id)
+         ON CONFLICT (source, source_external_id, user_id)
          WHERE source_external_id IS NOT NULL
          DO UPDATE SET
             company_name = EXCLUDED.company_name,

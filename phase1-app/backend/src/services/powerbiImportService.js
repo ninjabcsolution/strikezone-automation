@@ -122,7 +122,7 @@ class PowerBIImportService {
             $10,$11,$12,$13,
             $14,$15,$16,$17,$18,$19,$20,$21
           )
-          ON CONFLICT (source, source_external_id)
+          ON CONFLICT (source, source_external_id, user_id)
           WHERE source_external_id IS NOT NULL
           DO UPDATE SET
             company_name = EXCLUDED.company_name,

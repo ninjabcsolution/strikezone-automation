@@ -314,18 +314,44 @@ export default function MessagingPortal() {
               ))
             )}
           </div>
-          <div style={{ marginTop: '5px' }}>
+          <div style={{ marginTop: '8px', display: 'flex', gap: '10px' }}>
             <button
               onClick={() => setSelectedContacts(contacts.map(c => c.id))}
-              style={{ marginRight: '10px', padding: '4px 8px', fontSize: '12px', cursor: 'pointer' }}
+              disabled={contacts.length === 0}
+              style={{ 
+                padding: '6px 14px', 
+                fontSize: '13px', 
+                cursor: contacts.length === 0 ? 'not-allowed' : 'pointer',
+                background: contacts.length === 0 ? '#e5e7eb' : '#3b82f6',
+                color: contacts.length === 0 ? '#9ca3af' : 'white',
+                border: 'none',
+                borderRadius: '6px',
+                fontWeight: '500',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
             >
-              Select All
+              <HiCheckCircle size={14} /> Select All
             </button>
             <button
               onClick={() => setSelectedContacts([])}
-              style={{ padding: '4px 8px', fontSize: '12px', cursor: 'pointer' }}
+              disabled={selectedContacts.length === 0}
+              style={{ 
+                padding: '6px 14px', 
+                fontSize: '13px', 
+                cursor: selectedContacts.length === 0 ? 'not-allowed' : 'pointer',
+                background: selectedContacts.length === 0 ? '#f3f4f6' : 'white',
+                color: selectedContacts.length === 0 ? '#9ca3af' : '#374151',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                fontWeight: '500',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
             >
-              Clear
+              <HiXCircle size={14} /> Clear Selection
             </button>
           </div>
         </div>

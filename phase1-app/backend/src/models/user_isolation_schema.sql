@@ -113,3 +113,10 @@ COMMENT ON COLUMN customers.user_id IS 'Owner user_id for multi-tenant data isol
 COMMENT ON COLUMN products.user_id IS 'Owner user_id for multi-tenant data isolation';
 COMMENT ON COLUMN orders.user_id IS 'Owner user_id for multi-tenant data isolation';
 COMMENT ON COLUMN order_lines.user_id IS 'Owner user_id for multi-tenant data isolation';
+
+-- Fix lookalike_targets unique index to include user_id for proper multi-tenant isolation
+-- This allows different users to have targets with the same source_external_id
+DROP INDEX IF EXISTS ux_lookalike_targets_source_external;
+CREATE UNIQUE INDEX IF NOT EXISTS ux_lookalike_targets_source_external 
+    ON lookalike_targets (source, source_external_id, user_id) 
+    WHERE source_external_id IS NOT NULL;
