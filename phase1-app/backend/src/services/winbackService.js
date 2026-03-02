@@ -5,7 +5,12 @@ const auditLogService = require('./auditLogService');
 // Find customers that were historically valuable but have not ordered in N days.
 // Output is stored into lookalike_targets with source='winback'.
 class WinbackService {
-  async generate({ inactiveDays = 180, limit = 200 }, actor) {
+  async generate({ inactiveDays = 180, limit = 200 }, actor, userId = null) {
+    // If no userId, return empty
+    if (!userId) {
+      return { inserted: 0, updated: 0, totalCandidates: 0 };
+    }
+    
     const res = await pool.query(
       `SELECT
          cm.customer_id,
@@ -26,9 +31,10 @@ class WinbackService {
        JOIN customers c ON c.customer_id = cm.customer_id
        WHERE cm.total_gross_margin > 0
          AND cm.recency_days >= $1
+         AND c.user_id = $2
        ORDER BY cm.total_gross_margin DESC
-       LIMIT $2`,
-      [inactiveDays, limit]
+       LIMIT $3`,
+      [inactiveDays, userId, limit]
     );
 
     let inserted = 0;
@@ -41,12 +47,12 @@ class WinbackService {
           company_name, industry, naics, city, state, country,
           employee_count, annual_revenue,
           similarity_score, opportunity_score, tier, reason_codes,
-          source, source_external_id, external_data, status, segment
+          source, source_external_id, external_data, status, segment, user_id
         ) VALUES (
           $1,$2,$3,$4,$5,$6,
           $7,$8,
           $9,$10,$11,$12,
-          $13,$14,$15,$16,$17
+          $13,$14,$15,$16,$17,$18
         )
         ON CONFLICT (source, source_external_id)
         WHERE source_external_id IS NOT NULL
@@ -84,6 +90,7 @@ class WinbackService {
           r,
           'pending_review',
           'WinBack',
+          userId,
         ]
       );
 
@@ -95,7 +102,7 @@ class WinbackService {
       actor,
       action: 'winback.generated',
       entityType: 'lookalike_targets',
-      details: { inactiveDays, limit, inserted, updated },
+      details: { inactiveDays, limit, inserted, updated, userId },
     });
 
     return { inserted, updated, totalCandidates: res.rows.length };

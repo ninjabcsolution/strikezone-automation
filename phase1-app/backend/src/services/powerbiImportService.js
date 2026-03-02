@@ -54,7 +54,7 @@ function parseReasonCodes(value) {
 }
 
 class PowerBIImportService {
-  async importTargets({ records, actor }) {
+  async importTargets({ records, actor, userId = null }) {
     if (!Array.isArray(records)) {
       const err = new Error('records must be an array');
       err.statusCode = 400;
@@ -115,12 +115,12 @@ class PowerBIImportService {
             company_name, domain, industry, naics, city, state, country,
             employee_count, annual_revenue,
             similarity_score, opportunity_score, tier, reason_codes,
-            source, source_external_id, external_data, status, notes, updated_by, segment
+            source, source_external_id, external_data, status, notes, updated_by, segment, user_id
           ) VALUES (
             $1,$2,$3,$4,$5,$6,$7,
             $8,$9,
             $10,$11,$12,$13,
-            $14,$15,$16,$17,$18,$19,$20
+            $14,$15,$16,$17,$18,$19,$20,$21
           )
           ON CONFLICT (source, source_external_id)
           WHERE source_external_id IS NOT NULL
@@ -164,6 +164,7 @@ class PowerBIImportService {
             nr.notes || null,
             actor || null,
             segment,
+            userId,
           ]
         );
 
@@ -178,7 +179,7 @@ class PowerBIImportService {
       actor,
       action: 'powerbi.import.targets',
       entityType: 'lookalike_targets',
-      details: { inserted, updated, failed: errors.length },
+      details: { inserted, updated, failed: errors.length, userId },
     });
 
     return { inserted, updated, failed: errors.length, errors: errors.slice(0, 50) };

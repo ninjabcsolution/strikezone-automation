@@ -2,7 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const powerbiImportService = require('../services/powerbiImportService');
 const { csvToJson } = require('../services/csvJsonService');
-const { optionalAuth } = require('../middleware/auth');
+const { optionalAuth, getUserIdFilter } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -20,8 +20,9 @@ function getActor(req) {
 router.post('/import/targets', async (req, res) => {
   try {
     const actor = getActor(req);
+    const userId = getUserIdFilter(req);
     const { records } = req.body || {};
-    const result = await powerbiImportService.importTargets({ records, actor });
+    const result = await powerbiImportService.importTargets({ records, actor, userId });
     res.json({ status: 'success', ...result });
   } catch (err) {
     const status = err.statusCode || 500;
@@ -34,13 +35,14 @@ router.post('/import/targets', async (req, res) => {
 router.post('/import/targets-csv', upload.single('file'), async (req, res) => {
   try {
     const actor = getActor(req);
+    const userId = getUserIdFilter(req);
     if (!req.file) {
       return res.status(400).json({ error: 'Missing file' });
     }
 
     const text = req.file.buffer.toString('utf8');
     const records = csvToJson(text);
-    const result = await powerbiImportService.importTargets({ records, actor });
+    const result = await powerbiImportService.importTargets({ records, actor, userId });
     res.json({ status: 'success', ...result, totalRows: records.length });
   } catch (err) {
     const status = err.statusCode || 500;

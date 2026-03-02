@@ -76,7 +76,7 @@ class MessagingService {
   /**
    * Generate a single message for a contact
    */
-  async generateMessage({ contactId, templateId, messageType, tone, customInstructions }, actor) {
+  async generateMessage({ contactId, templateId, messageType, tone, customInstructions }, actor, userId = null) {
     // Get contact details
     const contactResult = await pool.query(
       'SELECT * FROM enriched_contacts WHERE id = $1',
@@ -111,8 +111,8 @@ class MessagingService {
     const insertResult = await pool.query(
       `INSERT INTO generated_messages (
         contact_id, template_id, message_type, subject, body,
-        personalization_data, ai_model, ai_prompt_used, approval_status
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending')
+        personalization_data, ai_model, ai_prompt_used, approval_status, user_id
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', $9)
       RETURNING *`,
       [
         contactId,
@@ -123,6 +123,7 @@ class MessagingService {
         JSON.stringify({ contact, template }),
         aiResult.model,
         aiResult.promptUsed,
+        userId,
       ]
     );
 
@@ -131,7 +132,7 @@ class MessagingService {
       action: 'message.generated',
       entityType: 'generated_messages',
       entityId: insertResult.rows[0].id,
-      details: { contactId, templateId, messageType },
+      details: { contactId, templateId, messageType, userId },
     });
 
     return insertResult.rows[0];
@@ -140,14 +141,14 @@ class MessagingService {
   /**
    * Batch generate messages for multiple contacts
    */
-  async generateBatch({ contactIds, templateId, messageType, tone, customInstructions }, actor) {
+  async generateBatch({ contactIds, templateId, messageType, tone, customInstructions }, actor, userId = null) {
     // Create generation run record
     const runResult = await pool.query(
       `INSERT INTO message_generation_runs (
-        status, template_id, message_type, total_contacts, ai_model, started_at
-      ) VALUES ('running', $1, $2, $3, $4, NOW())
+        status, template_id, message_type, total_contacts, ai_model, started_at, user_id
+      ) VALUES ('running', $1, $2, $3, $4, NOW(), $5)
       RETURNING id`,
-      [templateId, messageType, contactIds.length, openaiService.defaultModel]
+      [templateId, messageType, contactIds.length, openaiService.defaultModel, userId]
     );
     const runId = runResult.rows[0].id;
 
@@ -185,8 +186,8 @@ class MessagingService {
         const insertResult = await pool.query(
           `INSERT INTO generated_messages (
             contact_id, template_id, message_type, subject, body,
-            personalization_data, ai_model, ai_prompt_used, approval_status
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending')
+            personalization_data, ai_model, ai_prompt_used, approval_status, user_id
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', $9)
           RETURNING id`,
           [
             contact.id,
@@ -197,6 +198,7 @@ class MessagingService {
             JSON.stringify({ contact }),
             aiResult.model,
             aiResult.promptUsed,
+            userId,
           ]
         );
 
@@ -224,7 +226,7 @@ class MessagingService {
       action: 'message.batch_generated',
       entityType: 'message_generation_runs',
       entityId: runId,
-      details: { totalContacts: contactIds.length, generatedCount, failedCount },
+      details: { totalContacts: contactIds.length, generatedCount, failedCount, userId },
     });
 
     return { runId, generatedCount, failedCount, results };
@@ -234,7 +236,12 @@ class MessagingService {
   // Message Retrieval
   // ========================================
 
-  async getMessages({ status, messageType, contactId, limit = 50, offset = 0 } = {}) {
+  async getMessages({ status, messageType, contactId, limit = 50, offset = 0, userId = null } = {}) {
+    // If no userId, return empty
+    if (!userId) {
+      return { rows: [], pagination: { total: 0, page: 1, limit, totalPages: 0, hasNext: false, hasPrev: false } };
+    }
+    
     let query = `
       SELECT gm.*, 
              ec.first_name, ec.last_name, ec.full_name as contact_name, 
@@ -243,10 +250,10 @@ class MessagingService {
       FROM generated_messages gm
       LEFT JOIN enriched_contacts ec ON gm.contact_id = ec.id
       LEFT JOIN message_templates mt ON gm.template_id = mt.id
-      WHERE 1=1
+      WHERE gm.user_id = $1
     `;
-    const params = [];
-    let paramIndex = 1;
+    const params = [userId];
+    let paramIndex = 2;
 
     if (status) {
       query += ` AND gm.approval_status = $${paramIndex++}`;
@@ -261,29 +268,57 @@ class MessagingService {
       params.push(contactId);
     }
 
+    // Get count first
+    const countQuery = query.replace(/SELECT gm\.\*.*FROM/, 'SELECT COUNT(*) as total FROM');
+    const countResult = await pool.query(countQuery.split('ORDER BY')[0], params);
+    const total = parseInt(countResult.rows[0]?.total || 0, 10);
+
     query += ` ORDER BY gm.created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
     params.push(limit, offset);
 
     const result = await pool.query(query, params);
-    return result.rows;
+    const page = Math.floor(offset / limit) + 1;
+    const totalPages = Math.ceil(total / limit);
+    
+    return {
+      rows: result.rows,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      }
+    };
   }
 
-  async getMessageById(id) {
-    const result = await pool.query(
-      `SELECT gm.*, 
+  async getMessageById(id, userId = null) {
+    let query = `SELECT gm.*, 
               ec.first_name, ec.last_name, ec.full_name as contact_name,
               ec.email as contact_email, ec.title, ec.company_name, ec.linkedin_url,
               mt.name as template_name, mt.type as template_type
        FROM generated_messages gm
        LEFT JOIN enriched_contacts ec ON gm.contact_id = ec.id
        LEFT JOIN message_templates mt ON gm.template_id = mt.id
-       WHERE gm.id = $1`,
-      [id]
-    );
+       WHERE gm.id = $1`;
+    const params = [id];
+    
+    if (userId) {
+      query += ' AND gm.user_id = $2';
+      params.push(userId);
+    }
+    
+    const result = await pool.query(query, params);
     return result.rows[0] || null;
   }
 
-  async getMessageStats() {
+  async getMessageStats(userId = null) {
+    // If no userId, return empty stats
+    if (!userId) {
+      return { total: '0', pending: '0', approved: '0', rejected: '0', edited: '0' };
+    }
+    
     const result = await pool.query(`
       SELECT 
         COUNT(*) as total,
@@ -292,7 +327,8 @@ class MessagingService {
         COUNT(*) FILTER (WHERE approval_status = 'rejected') as rejected,
         COUNT(*) FILTER (WHERE approval_status = 'edited') as edited
       FROM generated_messages
-    `);
+      WHERE user_id = $1
+    `, [userId]);
     return result.rows[0];
   }
 
@@ -300,7 +336,13 @@ class MessagingService {
   // Message Approval Workflow
   // ========================================
 
-  async approveMessage(id, approvedBy, actor) {
+  async approveMessage(id, approvedBy, actor, userId = null) {
+    // Verify ownership
+    if (userId) {
+      const existing = await this.getMessageById(id, userId);
+      if (!existing) return null;
+    }
+    
     const result = await pool.query(
       `UPDATE generated_messages 
        SET approval_status = 'approved', approved_by = $1, approved_at = NOW(), updated_at = NOW()
@@ -322,7 +364,13 @@ class MessagingService {
     return result.rows[0];
   }
 
-  async rejectMessage(id, rejectionReason, rejectedBy, actor) {
+  async rejectMessage(id, rejectionReason, rejectedBy, actor, userId = null) {
+    // Verify ownership
+    if (userId) {
+      const existing = await this.getMessageById(id, userId);
+      if (!existing) return null;
+    }
+    
     const result = await pool.query(
       `UPDATE generated_messages 
        SET approval_status = 'rejected', rejection_reason = $1, approved_by = $2, updated_at = NOW()
@@ -344,7 +392,13 @@ class MessagingService {
     return result.rows[0];
   }
 
-  async editAndApprove(id, editedBody, editedSubject, approvedBy, actor) {
+  async editAndApprove(id, editedBody, editedSubject, approvedBy, actor, userId = null) {
+    // Verify ownership
+    if (userId) {
+      const existing = await this.getMessageById(id, userId);
+      if (!existing) return null;
+    }
+    
     const result = await pool.query(
       `UPDATE generated_messages 
        SET approval_status = 'edited', 
@@ -371,14 +425,19 @@ class MessagingService {
     return result.rows[0];
   }
 
-  async bulkApprove(ids, approvedBy, actor) {
-    const result = await pool.query(
-      `UPDATE generated_messages 
+  async bulkApprove(ids, approvedBy, actor, userId = null) {
+    let query = `UPDATE generated_messages 
        SET approval_status = 'approved', approved_by = $1, approved_at = NOW(), updated_at = NOW()
-       WHERE id = ANY($2)
-       RETURNING id`,
-      [approvedBy, ids]
-    );
+       WHERE id = ANY($2)`;
+    const params = [approvedBy, ids];
+    
+    if (userId) {
+      query += ' AND user_id = $3';
+      params.push(userId);
+    }
+    query += ' RETURNING id';
+    
+    const result = await pool.query(query, params);
 
     await auditLogService.log({
       actor,
@@ -390,14 +449,19 @@ class MessagingService {
     return result.rows;
   }
 
-  async bulkReject(ids, rejectionReason, rejectedBy, actor) {
-    const result = await pool.query(
-      `UPDATE generated_messages 
+  async bulkReject(ids, rejectionReason, rejectedBy, actor, userId = null) {
+    let query = `UPDATE generated_messages 
        SET approval_status = 'rejected', rejection_reason = $1, approved_by = $2, updated_at = NOW()
-       WHERE id = ANY($3)
-       RETURNING id`,
-      [rejectionReason, rejectedBy, ids]
-    );
+       WHERE id = ANY($3)`;
+    const params = [rejectionReason, rejectedBy, ids];
+    
+    if (userId) {
+      query += ' AND user_id = $4';
+      params.push(userId);
+    }
+    query += ' RETURNING id';
+    
+    const result = await pool.query(query, params);
 
     await auditLogService.log({
       actor,
@@ -413,14 +477,20 @@ class MessagingService {
   // Generation Runs
   // ========================================
 
-  async getGenerationRuns({ limit = 20 } = {}) {
+  async getGenerationRuns({ limit = 20, userId = null } = {}) {
+    // If no userId, return empty
+    if (!userId) {
+      return [];
+    }
+    
     const result = await pool.query(
       `SELECT mgr.*, mt.name as template_name
        FROM message_generation_runs mgr
        LEFT JOIN message_templates mt ON mgr.template_id = mt.id
+       WHERE mgr.user_id = $1
        ORDER BY mgr.created_at DESC
-       LIMIT $1`,
-      [limit]
+       LIMIT $2`,
+      [userId, limit]
     );
     return result.rows;
   }
@@ -429,7 +499,12 @@ class MessagingService {
   // Export
   // ========================================
 
-  async exportApprovedMessages({ messageType } = {}) {
+  async exportApprovedMessages({ messageType, userId = null } = {}) {
+    // If no userId, return empty
+    if (!userId) {
+      return [];
+    }
+    
     let query = `
       SELECT gm.*, 
              ec.email as contact_email, ec.full_name as contact_name,
@@ -437,11 +512,13 @@ class MessagingService {
       FROM generated_messages gm
       LEFT JOIN enriched_contacts ec ON gm.contact_id = ec.id
       WHERE gm.approval_status IN ('approved', 'edited')
+        AND gm.user_id = $1
     `;
-    const params = [];
+    const params = [userId];
+    let paramIndex = 2;
 
     if (messageType) {
-      query += ' AND gm.message_type = $1';
+      query += ` AND gm.message_type = $${paramIndex++}`;
       params.push(messageType);
     }
     query += ' ORDER BY gm.approved_at DESC';

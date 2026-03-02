@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const top20Service = require('../services/top20Service');
-const { optionalAuth } = require('../middleware/auth');
+const { optionalAuth, getUserIdFilter } = require('../middleware/auth');
 
 // Apply optional auth to all routes - user_id will be used for data isolation
 router.use(optionalAuth);
@@ -9,7 +9,7 @@ router.use(optionalAuth);
 // Calculate customer metrics (Top 20% by margin) - filtered by user
 router.post('/calculate', async (req, res) => {
   try {
-    const userId = req.userId || null;
+    const userId = getUserIdFilter(req);
     const stats = await top20Service.calculateCustomerMetrics(userId);
     res.json({ status: 'success', message: 'Customer metrics calculated', stats, userId });
   } catch (error) {
@@ -21,7 +21,7 @@ router.post('/calculate', async (req, res) => {
 // Calculate 3-Year CAGR for all customers - filtered by user
 router.post('/calculate-cagr', async (req, res) => {
   try {
-    const userId = req.userId || null;
+    const userId = getUserIdFilter(req);
     const result = await top20Service.calculateCAGR(userId);
     res.json({ 
       status: 'success', 
@@ -38,7 +38,7 @@ router.post('/calculate-cagr', async (req, res) => {
 // Calculate all metrics (Top 20% by margin + CAGR) - filtered by user
 router.post('/calculate-all', async (req, res) => {
   try {
-    const userId = req.userId || null;
+    const userId = getUserIdFilter(req);
     const stats = await top20Service.calculateCustomerMetrics(userId);
     const cagrResult = await top20Service.calculateCAGR(userId);
     res.json({ 
@@ -57,7 +57,7 @@ router.post('/calculate-all', async (req, res) => {
 // Get CAGR analysis data - filtered by user
 router.get('/cagr-analysis', async (req, res) => {
   try {
-    const userId = req.userId || null;
+    const userId = getUserIdFilter(req);
     const topOnly = req.query.topOnly === 'true';
     const consistentOnly = req.query.consistentOnly === 'true';
     const limit = parseInt(req.query.limit) || 100;
@@ -73,7 +73,7 @@ router.get('/cagr-analysis', async (req, res) => {
 // Get Top 20% vs 80% Comparison - filtered by user
 router.get('/top20-comparison', async (req, res) => {
   try {
-    const userId = req.userId || null;
+    const userId = getUserIdFilter(req);
     const rankBy = req.query.rankBy || 'margin'; // 'margin' or 'cagr'
     const comparison = await top20Service.getTop20Comparison(rankBy, userId);
     res.json({ status: 'success', ...comparison, userId });
@@ -86,7 +86,7 @@ router.get('/top20-comparison', async (req, res) => {
 // Get Top 20% customers - filtered by user
 router.get('/top20', async (req, res) => {
   try {
-    const userId = req.userId || null;
+    const userId = getUserIdFilter(req);
     const limit = parseInt(req.query.limit) || 24;
     const customers = await top20Service.getTop20Customers(limit, userId);
     const stats = await top20Service.getTop20Stats(userId);
@@ -100,7 +100,7 @@ router.get('/top20', async (req, res) => {
 // Get stats - filtered by user
 router.get('/stats', async (req, res) => {
   try {
-    const userId = req.userId || null;
+    const userId = getUserIdFilter(req);
     const stats = await top20Service.getTop20Stats(userId);
     res.json({ status: 'success', stats, userId });
   } catch (error) {

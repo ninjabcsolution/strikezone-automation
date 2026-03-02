@@ -55,37 +55,37 @@ class LookalikeGenerationService {
   /**
    * Unified lookalike generation - auto-selects best provider
    */
-  async generate({ provider, filters = {}, page = 1, perPage = 25, useIntent = false }, actor) {
+  async generate({ provider, filters = {}, page = 1, perPage = 25, useIntent = false }, actor, userId = null) {
     const selectedProvider = provider || this.getDefaultProvider();
     
     // If no provider configured, use demo mode
     if (!selectedProvider || provider === 'demo') {
-      return this.generateDemoData({ page, perPage }, actor);
+      return this.generateDemoData({ page, perPage }, actor, userId);
     }
 
     // Get seed companies (Top 20 customers)
-    const seedCompanies = await this.getSeedCompanies();
+    const seedCompanies = await this.getSeedCompanies(userId);
 
     switch (selectedProvider) {
       case 'zoominfo':
         return useIntent
-          ? this.generateFromZoomInfoIntent({ filters, page, perPage }, actor)
-          : this.generateFromZoomInfo({ seedCompanies, filters, page, perPage }, actor);
+          ? this.generateFromZoomInfoIntent({ filters, page, perPage }, actor, userId)
+          : this.generateFromZoomInfo({ seedCompanies, filters, page, perPage }, actor, userId);
       
       case 'sixsense':
-        return this.generateFromSixsense({ seedCompanies, filters, page, perPage, useIntent }, actor);
+        return this.generateFromSixsense({ seedCompanies, filters, page, perPage, useIntent }, actor, userId);
       
       case 'apollo':
       default:
-        return this.generateFromApollo({ q: filters.q, page, perPage }, actor);
+        return this.generateFromApollo({ q: filters.q, page, perPage }, actor, userId);
     }
   }
 
   /**
    * Generate demo/mock lookalike data for testing without API keys
    */
-  async generateDemoData({ page = 1, perPage = 25 }, actor) {
-    const icp = await icpProfileService.getTop20Profile();
+  async generateDemoData({ page = 1, perPage = 25 }, actor, userId = null) {
+    const icp = await icpProfileService.getTop20Profile(userId);
     
     // Get industry distribution from ICP
     const topIndustries = icp.industries?.slice(0, 5).map(i => i.value) || [
@@ -128,7 +128,7 @@ class LookalikeGenerationService {
         opportunity_score: score.opportunityScore,
         tier: score.tier,
         reason_codes: [...score.reasonCodes, 'DEMO_DATA'],
-      });
+      }, userId);
       
       if (result.inserted) inserted++;
       demoCompanies.push({ ...company, ...score });
@@ -155,27 +155,33 @@ class LookalikeGenerationService {
   /**
    * Get Top 20 seed companies for lookalike modeling
    */
-  async getSeedCompanies() {
+  async getSeedCompanies(userId = null) {
+    // If no userId, return empty
+    if (!userId) {
+      return [];
+    }
+    
     const result = await pool.query(`
       SELECT c.customer_id, c.customer_name as company_name, c.industry, c.state, c.city, c.country,
              c.annual_revenue, c.employee_count, cm.total_gross_margin
       FROM customers c
       LEFT JOIN customer_metrics cm ON c.customer_id = cm.customer_id
-      WHERE cm.is_top_20 = true OR cm.percentile_rank <= 20 OR cm.total_gross_margin IS NOT NULL
+      WHERE c.user_id = $1
+        AND (cm.is_top_20 = true OR cm.percentile_rank <= 20 OR cm.total_gross_margin IS NOT NULL)
       ORDER BY cm.total_gross_margin DESC NULLS LAST, c.annual_revenue DESC NULLS LAST
       LIMIT 20
-    `);
+    `, [userId]);
     return result.rows;
   }
 
   /**
    * Generate lookalikes using ZoomInfo's AI-powered similarity search
    */
-  async generateFromZoomInfo({ seedCompanies, filters = {}, page = 1, perPage = 25 }, actor) {
+  async generateFromZoomInfo({ seedCompanies, filters = {}, page = 1, perPage = 25 }, actor, userId = null) {
     const data = await zoominfoService.searchSimilarCompanies({ seedCompanies, filters, page, perPage }, actor);
     
     let inserted = 0, updated = 0;
-    const icp = await icpProfileService.getTop20Profile();
+    const icp = await icpProfileService.getTop20Profile(userId);
 
     for (const company of data.companies) {
       const mapped = zoominfoService.mapToStandardFormat(company);
@@ -187,7 +193,7 @@ class LookalikeGenerationService {
         opportunity_score: score.opportunityScore,
         tier: score.tier,
         reason_codes: score.reasonCodes,
-      });
+      }, userId);
 
       if (result.inserted) inserted++; else updated++;
     }
@@ -196,7 +202,7 @@ class LookalikeGenerationService {
       actor,
       action: 'lookalike.generate.zoominfo',
       entityType: 'lookalike_targets',
-      details: { page, perPage, inserted, updated, seedCount: seedCompanies.length },
+      details: { page, perPage, inserted, updated, seedCount: seedCompanies.length, userId },
     });
 
     return { provider: 'zoominfo', inserted, updated, totalFetched: data.companies.length, pagination: data.pagination };
@@ -205,13 +211,13 @@ class LookalikeGenerationService {
   /**
    * Generate lookalikes using ZoomInfo Intent Data
    */
-  async generateFromZoomInfoIntent({ filters = {}, page = 1, perPage = 25 }, actor) {
+  async generateFromZoomInfoIntent({ filters = {}, page = 1, perPage = 25 }, actor, userId = null) {
     const { topics = [], industries = [], minIntentScore = 70 } = filters;
     
     const data = await zoominfoService.searchWithIntent({ topics, industries, minIntentScore, page, perPage }, actor);
     
     let inserted = 0, updated = 0;
-    const icp = await icpProfileService.getTop20Profile();
+    const icp = await icpProfileService.getTop20Profile(userId);
 
     for (const company of data.companies) {
       const mapped = zoominfoService.mapToStandardFormat(company);
@@ -225,7 +231,7 @@ class LookalikeGenerationService {
         opportunity_score: Math.min(100, baseScore.opportunityScore + intentBoost),
         tier: baseScore.tier,
         reason_codes: [...baseScore.reasonCodes, 'HIGH_INTENT'],
-      });
+      }, userId);
 
       if (result.inserted) inserted++; else updated++;
     }
@@ -234,7 +240,7 @@ class LookalikeGenerationService {
       actor,
       action: 'lookalike.generate.zoominfo_intent',
       entityType: 'lookalike_targets',
-      details: { topics, inserted, updated },
+      details: { topics, inserted, updated, userId },
     });
 
     return { provider: 'zoominfo_intent', inserted, updated, totalFetched: data.companies.length, pagination: data.pagination };
@@ -243,7 +249,7 @@ class LookalikeGenerationService {
   /**
    * Generate lookalikes using 6sense AI-powered predictive modeling
    */
-  async generateFromSixsense({ seedCompanies, filters = {}, page = 1, perPage = 25, useIntent = false }, actor) {
+  async generateFromSixsense({ seedCompanies, filters = {}, page = 1, perPage = 25, useIntent = false }, actor, userId = null) {
     const seedDomains = seedCompanies
       .map(c => c.domain || c.company_name?.toLowerCase().replace(/\s+/g, '') + '.com')
       .filter(Boolean);
@@ -273,7 +279,7 @@ class LookalikeGenerationService {
     }
 
     let inserted = 0, updated = 0;
-    const icp = await icpProfileService.getTop20Profile();
+    const icp = await icpProfileService.getTop20Profile(userId);
 
     for (const account of accounts) {
       const mapped = sixsenseService.mapToStandardFormat(account);
@@ -301,7 +307,7 @@ class LookalikeGenerationService {
         opportunity_score: Math.min(100, baseScore.opportunityScore + intentBoost + predictiveBoost),
         tier: baseScore.tier,
         reason_codes: reasonCodes,
-      });
+      }, userId);
 
       if (result.inserted) inserted++; else updated++;
     }
@@ -310,7 +316,7 @@ class LookalikeGenerationService {
       actor,
       action: useIntent ? 'lookalike.generate.sixsense_intent' : 'lookalike.generate.sixsense',
       entityType: 'lookalike_targets',
-      details: { page, perPage, inserted, updated, seedCount: seedDomains.length },
+      details: { page, perPage, inserted, updated, seedCount: seedDomains.length, userId },
     });
 
     return { provider: useIntent ? 'sixsense_intent' : 'sixsense', inserted, updated, totalFetched: accounts.length, pagination };
@@ -319,15 +325,15 @@ class LookalikeGenerationService {
   /**
    * Helper: Upsert a lookalike target record
    */
-  async upsertLookalikeTarget(target) {
+  async upsertLookalikeTarget(target, userId = null) {
     const result = await pool.query(
       `INSERT INTO lookalike_targets (
           company_name, domain, industry, naics, city, state, country,
           employee_count, annual_revenue,
           similarity_score, opportunity_score, tier, reason_codes,
-          source, source_external_id, external_data, status
+          source, source_external_id, external_data, status, user_id
        ) VALUES (
-          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17
+          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18
        )
        ON CONFLICT (source, source_external_id)
        WHERE source_external_id IS NOT NULL
@@ -366,13 +372,14 @@ class LookalikeGenerationService {
         target.source_external_id,
         target.external_data,
         'pending_review',
+        userId,
       ]
     );
     return { inserted: result.rows[0]?.inserted, targetId: result.rows[0]?.target_id };
   }
 
-  async generateFromApollo({ q, page = 1, perPage = 25 }, actor) {
-    const icp = await icpProfileService.getTop20Profile();
+  async generateFromApollo({ q, page = 1, perPage = 25 }, actor, userId = null) {
+    const icp = await icpProfileService.getTop20Profile(userId);
 
     // NOTE: Don't add restrictive filters by default - they often result in 0 results.
     // The ICP profile is used for SCORING, not for filtering the Apollo search.
@@ -433,12 +440,12 @@ class LookalikeGenerationService {
             company_name, domain, industry, naics, city, state, country,
             employee_count, annual_revenue,
             similarity_score, opportunity_score, tier, reason_codes,
-            source, source_external_id, external_data, status
+            source, source_external_id, external_data, status, user_id
          ) VALUES (
             $1,$2,$3,$4,$5,$6,$7,
             $8,$9,
             $10,$11,$12,$13,
-            $14,$15,$16,$17
+            $14,$15,$16,$17,$18
          )
          ON CONFLICT (source, source_external_id)
          WHERE source_external_id IS NOT NULL
@@ -477,6 +484,7 @@ class LookalikeGenerationService {
           row.source_external_id,
           row.external_data,
           row.status,
+          userId,
         ]
       );
 
@@ -488,7 +496,7 @@ class LookalikeGenerationService {
       actor,
       action: 'lookalike.generate.apollo',
       entityType: 'lookalike_targets',
-      details: { q, page, perPage, inserted, updated },
+      details: { q, page, perPage, inserted, updated, userId },
     });
 
     return { inserted, updated, totalFetched: orgs.length, icpProfile: icp };

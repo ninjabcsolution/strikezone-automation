@@ -1,7 +1,7 @@
 const express = require('express');
 const lookalikeGenerationService = require('../services/lookalikeGenerationService');
 const icpProfileService = require('../services/icpProfileService');
-const { optionalAuth } = require('../middleware/auth');
+const { optionalAuth, getUserIdFilter } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -31,7 +31,8 @@ router.get('/providers', (req, res) => {
 // GET /api/lookalike/icp-profile
 router.get('/icp-profile', async (req, res) => {
   try {
-    const profile = await icpProfileService.getTop20Profile();
+    const userId = getUserIdFilter(req);
+    const profile = await icpProfileService.getTop20Profile(userId);
     res.json({ status: 'success', profile });
   } catch (err) {
     res.status(500).json({ error: 'Failed to build ICP profile', message: err.message });
@@ -57,6 +58,7 @@ router.get('/icp-profile', async (req, res) => {
 router.post('/generate', async (req, res) => {
   try {
     const actor = getActor(req);
+    const userId = getUserIdFilter(req);
     const {
       provider,
       filters = {},
@@ -79,7 +81,8 @@ router.post('/generate', async (req, res) => {
           perPage: Math.min(parseInt(perPage, 10) || 25, 100),
           useIntent,
         },
-        actor
+        actor,
+        userId
       );
     } catch (apiErr) {
       // If API fails (no key, 402, etc), fall back to demo mode
@@ -90,7 +93,8 @@ router.post('/generate', async (req, res) => {
         console.log('API unavailable - falling back to demo mode:', apiErr.message);
         result = await lookalikeGenerationService.generateDemoData(
           { page: parseInt(page, 10) || 1, perPage: Math.min(parseInt(perPage, 10) || 25, 100) },
-          actor
+          actor,
+          userId
         );
         result.fallbackReason = isNoApiKey 
           ? 'No API key configured - using demo data' 
@@ -112,6 +116,7 @@ router.post('/generate', async (req, res) => {
 router.post('/generate/intent', async (req, res) => {
   try {
     const actor = getActor(req);
+    const userId = getUserIdFilter(req);
     const {
       provider,
       keywords = [],
@@ -141,7 +146,8 @@ router.post('/generate/intent', async (req, res) => {
         perPage: Math.min(parseInt(perPage, 10) || 25, 100),
         useIntent: true,
       },
-      actor
+      actor,
+      userId
     );
 
     res.json({ status: 'success', ...result });
@@ -154,7 +160,8 @@ router.post('/generate/intent', async (req, res) => {
 // GET /api/lookalike/seed-companies - Preview the seed companies used for lookalike modeling
 router.get('/seed-companies', async (req, res) => {
   try {
-    const seeds = await lookalikeGenerationService.getSeedCompanies();
+    const userId = getUserIdFilter(req);
+    const seeds = await lookalikeGenerationService.getSeedCompanies(userId);
     res.json({
       status: 'success',
       count: seeds.length,
