@@ -115,8 +115,8 @@ export default function SignupPage() {
         maxWidth: '450px',
         boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
       }}>
-        <div style={{ textAlign: 'center', marginBottom: '25px' }}>
-          <LogoLarge width={80} height={80} />
+        <div style={{ textAlign: 'center'}}>
+          <LogoLarge width={200} height={100} />
         </div>
 
         <h1 style={{ textAlign: 'center', marginBottom: '8px', fontSize: '24px', color: '#1f2937' }}>

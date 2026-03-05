@@ -56,8 +56,8 @@ export default function LoginPage() {
         maxWidth: '420px',
         boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
       }}>
-        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-          <LogoLarge width={100} height={100} />
+        <div style={{ textAlign: 'center', }}>
+          <LogoLarge width={200} height={100} />
         </div>
 
         <h1 style={{ textAlign: 'center', marginBottom: '10px', fontSize: '24px', color: '#1f2937' }}>
