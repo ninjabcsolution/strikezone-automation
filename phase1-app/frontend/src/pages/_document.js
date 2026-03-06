@@ -7,12 +7,9 @@ export default function Document() {
         {/* Charset for emoji support */}
         <meta charSet="utf-8" />
         
-        {/* Favicon - inline SVG as data URI */}
-        <link
-          rel="icon"
-          href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' stroke='%232563eb' stroke-width='4' fill='none'/><circle cx='50' cy='50' r='30' stroke='%232563eb' stroke-width='3' fill='none'/><circle cx='50' cy='50' r='15' fill='%232563eb'/><line x1='50' y1='5' x2='50' y2='20' stroke='%232563eb' stroke-width='4' stroke-linecap='round'/><line x1='50' y1='80' x2='50' y2='95' stroke='%232563eb' stroke-width='4' stroke-linecap='round'/><line x1='5' y1='50' x2='20' y2='50' stroke='%232563eb' stroke-width='4' stroke-linecap='round'/><line x1='80' y1='50' x2='95' y2='50' stroke='%232563eb' stroke-width='4' stroke-linecap='round'/><path d='M55 35 L48 50 L55 50 L45 65' stroke='%23f59e0b' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>"
-          type="image/svg+xml"
-        />
+        {/* Favicon - using PNG logo */}
+        <link rel="icon" href="/logo-small.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/logo-large.png" />
         
         {/* Meta tags */}
         <meta name="description" content="Strikezone - BDaaS Platform for identifying top customers and lookalikes" />

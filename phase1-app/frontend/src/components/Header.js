@@ -135,7 +135,7 @@ export default function Header() {
     }}>
       {/* Left - Logo */}
       <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
-        <Logo size={32} />
+        <Logo size={200} showText={false} />
       </Link>
 
       {/* Center - Main Navigation */}
