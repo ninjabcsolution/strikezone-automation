@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import toast, { Toaster } from 'react-hot-toast';
 import { HiMail, HiLockClosed, HiArrowRight } from 'react-icons/hi';
-import Logo from '../components/Logo';
+import Logo, { LogoLarge } from '../components/Logo';
 import { useAuth } from '../context/AuthContext';
 
 export default function LoginPage() {
@@ -56,8 +56,8 @@ export default function LoginPage() {
         maxWidth: '420px',
         boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
       }}>
-        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-          <Logo size={50} />
+        <div style={{ textAlign: 'center', }}>
+          <LogoLarge width={200} height={100} />
         </div>
 
         <h1 style={{ textAlign: 'center', marginBottom: '10px', fontSize: '24px', color: '#1f2937' }}>

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import toast, { Toaster } from 'react-hot-toast';
 import { HiMail, HiLockClosed, HiUser, HiOfficeBuilding, HiCheckCircle } from 'react-icons/hi';
-import Logo from '../components/Logo';
+import Logo, { LogoLarge } from '../components/Logo';
 import { useAuth } from '../context/AuthContext';
 
 export default function SignupPage() {
@@ -115,8 +115,8 @@ export default function SignupPage() {
         maxWidth: '450px',
         boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
       }}>
-        <div style={{ textAlign: 'center', marginBottom: '25px' }}>
-          <Logo size={45} />
+        <div style={{ textAlign: 'center'}}>
+          <LogoLarge width={200} height={100} />
         </div>
 
         <h1 style={{ textAlign: 'center', marginBottom: '8px', fontSize: '24px', color: '#1f2937' }}>
