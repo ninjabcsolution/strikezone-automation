@@ -39,6 +39,89 @@ export default function Document() {
           .emoji {
             font-family: 'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif;
           }
+
+          /* Responsive utilities */
+          .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 16px;
+          }
+          @media (min-width: 768px) {
+            .container { padding: 0 24px; }
+          }
+
+          /* Responsive grid */
+          .grid {
+            display: grid;
+            gap: 16px;
+          }
+          .grid-2 { grid-template-columns: 1fr; }
+          .grid-3 { grid-template-columns: 1fr; }
+          .grid-4 { grid-template-columns: 1fr; }
+          @media (min-width: 640px) {
+            .grid-2 { grid-template-columns: repeat(2, 1fr); }
+            .grid-3 { grid-template-columns: repeat(2, 1fr); }
+            .grid-4 { grid-template-columns: repeat(2, 1fr); }
+          }
+          @media (min-width: 1024px) {
+            .grid-3 { grid-template-columns: repeat(3, 1fr); }
+            .grid-4 { grid-template-columns: repeat(4, 1fr); }
+          }
+
+          /* Responsive text */
+          .text-responsive {
+            font-size: 14px;
+          }
+          @media (min-width: 768px) {
+            .text-responsive { font-size: 16px; }
+          }
+
+          /* Hide on mobile/desktop */
+          .hide-mobile { display: none; }
+          .hide-desktop { display: block; }
+          @media (min-width: 768px) {
+            .hide-mobile { display: block; }
+            .hide-desktop { display: none; }
+          }
+
+          /* Responsive cards */
+          .card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+          }
+          @media (min-width: 768px) {
+            .card { padding: 20px; }
+          }
+
+          /* Tables - horizontal scroll on mobile */
+          .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+          }
+          .table-responsive table {
+            min-width: 600px;
+          }
+
+          /* Smooth transitions */
+          .transition {
+            transition: all 0.2s ease;
+          }
+
+          /* Page wrapper */
+          .page-content {
+            padding: 16px;
+            min-height: calc(100vh - 60px);
+          }
+          @media (min-width: 768px) {
+            .page-content { padding: 24px; }
+          }
+          @media (min-width: 1024px) {
+            .page-content { padding: 32px; }
+          }
         `}</style>
       </Head>
       <body>
