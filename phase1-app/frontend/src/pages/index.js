@@ -170,7 +170,7 @@ export default function Home() {
       
       <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '30px 20px' }}>
         {/* Navigation Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px', marginBottom: '30px' }}>
+        {/* <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px', marginBottom: '30px' }}>
           {[
             { href: '/ceo-dashboard', icon: HiChartBar, label: 'CEO Dashboard', color: '#2563eb' },
             { href: '/icp-dashboard', icon: HiUserGroup, label: 'ICP Dashboard', color: '#10b981' },
@@ -204,7 +204,7 @@ export default function Home() {
               </div>
             </Link>
           ))}
-        </div>
+        </div> */}
 
         {/* Upload Progress Bar */}
         <div style={{ background: 'white', borderRadius: '16px', padding: '20px 30px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)', marginBottom: '25px' }}>
